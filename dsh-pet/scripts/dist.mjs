@@ -97,7 +97,8 @@ console.log(`[dist] target:        win:${target}`);
 // 直接调用 electron-builder 的 CLI 文件而不是 `pnpm exec`：路径里有 `p'c` 这种单引号，
 // 走 shell 传参会把参数切碎；node 直接 spawn 没有这层转义问题。
 const cli = join(root, 'node_modules', 'electron-builder', 'out', 'cli', 'cli.js');
-const args = [cli, '--win', target];
+// Publishing is owned by the release workflow; CI must only build an installer here.
+const args = [cli, '--win', target, '--publish', 'never'];
 if (process.env.DSH_PET_DIST_OUTPUT) args.push(`--config.directories.output=${resolve(root, process.env.DSH_PET_DIST_OUTPUT)}`);
 if (electronDist) args.push(`--config.electronDist=${electronDist}`);
 const child = spawn(process.execPath, args, {
