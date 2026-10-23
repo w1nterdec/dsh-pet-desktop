@@ -30,13 +30,16 @@ export function installDesktopAuth(session: DesktopSession, origin: string, rend
       const target = new URL(details.url);
       const frame = details.frame;
       const page = frame ? new URL(frame.url) : undefined;
+      const controlPage = page?.origin === origin && ['/', '/standalone-ai/'].includes(page.pathname);
+      const localApi = target.pathname.startsWith('/dsh-pet-7340/') || target.pathname.startsWith('/standalone-ai/');
       if (
         target.origin === origin &&
-        target.pathname.startsWith('/dsh-pet-7340/') &&
         frame?.parent === null &&
-        page?.protocol === 'file:' &&
-        page.origin === 'null' &&
-        page.href.split(/[?#]/, 1)[0] === renderer
+        ((controlPage && localApi) ||
+          (target.pathname.startsWith('/dsh-pet-7340/') &&
+            page?.protocol === 'file:' &&
+            page.origin === 'null' &&
+            page.href.split(/[?#]/, 1)[0] === renderer))
       ) {
         headers['X-DSH-Pet-Token'] = token;
       }

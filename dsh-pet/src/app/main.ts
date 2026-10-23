@@ -40,6 +40,8 @@ import { createRequestSecurity } from '../standalone/request-security';
 
 import { installDesktopAuth, type DesktopSession } from './desktop-auth';
 import { startRouter } from './router';
+import { installControlWindow } from './control-window';
+import { controlPage } from './control-page';
 
 /**
  * `electron` 由 Electron 运行时提供，**不是本包的依赖**。只声明实际用到的成员：
@@ -52,6 +54,8 @@ interface WebContentsLike {
   ): void;
 }
 interface ElectronApp {
+  getPath(name: string): string;
+  setPath(name: string, value: string): void;
   whenReady(): Promise<void>;
   requestSingleInstanceLock(): boolean;
   exit(code?: number): void;
@@ -72,6 +76,7 @@ const helperMain = join(packageRoot, 'runtime', 'electron-helper', 'main.js');
 const log = (message: string): void => console.log(`[dsh-pet-app] ${message}`);
 
 /** 单实例：第二次双击直接退出（共用 userData 的 Chromium profile 会互踢） */
+app.setPath('userData', join(app.getPath('appData'), 'dsh-pet'));
 const locked = app.requestSingleInstanceLock();
 if (!locked) {
   app.exit(0);
@@ -129,7 +134,15 @@ async function boot(): Promise<void> {
     authenticatedUrl: security.authenticatedUrl,
   });
 
-  const server = await startRouter(routes, { security, ai, log, status, landingPage });
+  let helper: { refreshDesktop(pets: Array<{ id: string; size: number }>): void } | undefined;
+  const server = await startRouter(routes, {
+    security,
+    ai,
+    log,
+    status,
+    landingPage,
+    onConfigChange: () => helper?.refreshDesktop(desktopPets()),
+  });
   port = server.port;
   const origin = `http://127.0.0.1:${port}`;
   log(`本机服务 ${origin}`);
@@ -166,15 +179,16 @@ async function boot(): Promise<void> {
       join(packageRoot, 'runtime/electron-helper/index.html'),
       security.token,
     );
+    installControlWindow(origin, join(packageRoot, 'assets/logo.png'), security.token);
   });
   process.env.DSH_PET_APP_TOKEN = security.token;
   try {
-    createRequire(import.meta.url)(helperMain);
+    helper = createRequire(import.meta.url)(helperMain) as typeof helper;
   } finally {
     delete process.env.DSH_PET_APP_TOKEN;
   }
 
-  app.on('second-instance', () => log('已有一个实例在运行，忽略本次启动'));
+  app.on('second-instance', () => log('已有实例，唤回控制中心'));
   app.on('will-quit', () => {
     // 退出前把最后一批日志刷出去（定时器最多 1s，这里显式补一次）
     void logger.flush();
@@ -222,41 +236,6 @@ function status(port: number): Record<string, unknown> {
   };
 }
 
-/** 落地页：取代以前的 `not found`。配置项只能改文件，真正的可视化配置在 /standalone-ai/。 */
-function landingPage(port: number): string {
-  const info = status(port);
-  const pets = (info.pets as Array<Record<string, unknown>>) ?? [];
-  const petLines = pets.length
-    ? pets
-        .map((pet) => `<li>${escapeHtml(String(pet.name ?? pet.id))}（${escapeHtml(String(pet.display))}）</li>`)
-        .join('')
-    : '<li>（未读到宠物，检查配置文件）</li>';
-  return `<!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><title>dsh-pet</title>
-<style>
-  body{font:14px/1.7 "Segoe UI",system-ui,sans-serif;margin:0;padding:32px;background:#f6f8fa;color:#1f2328}
-  main{max-width:720px;margin:0 auto;background:#fff;border:1px solid #d0d7de;border-radius:12px;padding:28px 32px}
-  h1{font-size:20px;margin:0 0 4px} .sub{color:#656d76;margin-bottom:20px}
-  h2{font-size:14px;margin:22px 0 6px} code{background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:1px 6px;font-size:12px}
-  ul{margin:6px 0;padding-left:20px} a{color:#0969da}
-</style></head>
-<body><main>
-  <h1>dsh-pet 桌宠</h1>
-  <div class="sub">版本 ${escapeHtml(String(info.version))} · 端口 ${port}</div>
-  <h2>宠物</h2><ul>${petLines}</ul>
-  <h2>配置文件</h2>
-  <p><code>${escapeHtml(String(info.configFile))}</code></p>
-  <p>改完配置后从托盘退出、重新打开应用即可生效（本模式没有「重载配置」菜单）。</p>
-  <h2>AI 设置</h2>
-  <p>AI 模型与密钥的配置页需要令牌，请<strong>右键桌宠 →「打开 AI 设置」</strong>，会直接打开已授权的页面。</p>
-  <h2>状态</h2>
-  <p><a href="/health">/health</a> · <a href="/standalone-ai/">配置页（未授权时读写会返回 403）</a></p>
-</main></body></html>`;
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(
-    /[&<>"']/g,
-    (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] ?? ch,
-  );
+function landingPage(): string {
+  return controlPage;
 }

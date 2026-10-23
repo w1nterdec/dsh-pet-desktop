@@ -162,3 +162,56 @@ test('app caps request bodies before plugins/settings and catches synchronous an
     await server.close();
   }
 });
+
+test('desktop assets are available and only successful configuration writes refresh pet windows', async () => {
+  let refreshes = 0;
+  const security = createRequestSecurity();
+  const server = await startRouter(
+    [
+      {
+        kind: 'prefix',
+        path: '/dsh-pet-7340',
+        handler: (req, res) => {
+          res.writeHead(req.headers['x-fail'] ? 400 : 200);
+          res.end('{}');
+        },
+      },
+    ],
+    {
+      security,
+      log: () => {},
+      status: () => ({}),
+      landingPage: () => 'desktop',
+      onConfigChange: () => {
+        refreshes++;
+      },
+    },
+  );
+  const base = 'http://127.0.0.1:' + server.port;
+  try {
+    for (const asset of ['desktop.js', 'desktop.css']) {
+      const response = await fetch(base + '/standalone-ai/' + asset);
+      assert.equal(response.status, 200);
+      assert.ok((await response.text()).length > 100);
+    }
+    assert.equal((await fetch(base + '/dsh-pet-7340/config', { method: 'PUT', body: '{}' })).status, 403);
+    assert.equal(refreshes, 0);
+    for (const [path, method, fail] of [
+      ['/config', 'GET', false],
+      ['/config', 'PUT', true],
+      ['/chat', 'POST', false],
+      ['/config', 'PUT', false],
+      ['/pet-display', 'POST', false],
+    ] as const) {
+      const response = await fetch(base + '/dsh-pet-7340' + path, {
+        method,
+        headers: { 'X-DSH-Pet-Token': security.token, ...(fail ? { 'X-Fail': '1' } : {}) },
+        ...(method === 'GET' ? {} : { body: '{}' }),
+      });
+      await response.text();
+    }
+    assert.equal(refreshes, 2);
+  } finally {
+    await server.close();
+  }
+});

@@ -9,7 +9,7 @@
  * 只出「解包目录」这一种形态：
  *   - portable（单文件）是 NSIS 自解压壳，每次启动都要把整个应用目录解压到 %TEMP%
  *     （约 400 MB、几十秒起），对 Electron 这种体量得不偿失；
- *   - nsis（安装包）对自用/绿色分发没有增量价值，配置已移除（要恢复见 electron-builder.yml 注释）。
+ *   - nsis：使用 `node scripts/dist.mjs nsis` 生成带快捷方式和卸载入口的安装包。
  *   目录版与 zip 分发都是「摊开」的，启动只要 2–3 秒。
  *
  * 为什么要这层封装：electron-builder 默认从 GitHub 取 Electron 与打包二进制，而本仓库所在的
@@ -51,6 +51,7 @@ function resolveElectronDist() {
     process.env.DSH_PET_ELECTRON_DIST,
     process.env.DSH_PET_ELECTRON_PATH ? dirname(process.env.DSH_PET_ELECTRON_PATH) : undefined,
     join(dshHome, 'electron'),
+    join(root, '..', '.tools', 'runtime', 'electron'),
   ].filter((value) => Boolean(value));
   for (const dir of candidates) {
     if (existsSync(join(dir, ELECTRON_REL))) return dir;
@@ -67,8 +68,8 @@ function resolveElectronDist() {
 }
 
 const target = process.argv[2] ?? 'dir';
-if (target !== 'dir') {
-  console.error(`[dist] 未知目标：${target}（只出解包目录，直接运行 node scripts/dist.mjs）`);
+if (!['dir', 'nsis'].includes(target)) {
+  console.error(`[dist] 未知目标：${target}（可用：dir / nsis）`);
   process.exit(2);
 }
 

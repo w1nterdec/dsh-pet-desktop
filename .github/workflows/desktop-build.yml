@@ -1,0 +1,46 @@
+name: Desktop app checks and Windows installer
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['dsh-pet/**', '.github/workflows/desktop-build.yml']
+  push:
+    branches: [main, desktop-app]
+    paths: ['dsh-pet/**', '.github/workflows/desktop-build.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: dsh-pet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm test
+      - name: Build Windows installer
+        run: pnpm run dist:installer
+        env:
+          DSH_PET_ALLOW_ELECTRON_DOWNLOAD: '1'
+      - name: Verify packaged app in an isolated home
+        run: pnpm run test:app
+        env:
+          DSH_PET_APP_EXECUTABLE: ${{ github.workspace }}\dsh-pet\dist-app\win-unpacked\DSH Pet.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DSH-Pet-Windows-x64
+          path: dsh-pet/dist-app/DSH-Pet-Setup-*.exe
+          if-no-files-found: error

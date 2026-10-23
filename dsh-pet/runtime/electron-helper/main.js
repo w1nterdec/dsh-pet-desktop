@@ -748,7 +748,7 @@ async function startTray() {
     // 托盘开关（main 条目的 trayEnabled）：只有**显式 false** 才不建——缺失或写坏时保持建，
     // 免得一份老配置/一个错值让托盘无声消失（非法值的告警由宿主读取侧统一报）。
     // 与下面的 pets 取自同一份成品配置，不新增任何通道。
-    if (merged && merged.main && merged.main.trayEnabled === false) return;
+    if (!APP_MODE && merged && merged.main && merged.main.trayEnabled === false) return;
     // 成品聚合的形状是 { <条目>: <整份配置文档> }——**顶层键不是宠物**，宠物在各条目的
     // `pets` 数组里。与渲染端同一契约（renderer.js 的 loadConfig → S.flattenConfigPets，
     // 规则源码见 src/shared/config.ts:26）。托盘只要 id/name/display，故不吹条目级字段。
@@ -788,10 +788,12 @@ async function startTray() {
         console.error('[dsh-pet-desktop-helper] tray quit failed:', String(e && e.message ? e.message : e));
       });
     };
+    if (tray) tray.destroy();
     tray = new Tray(trayIcon());
     tray.setToolTip('dsh-pet 桌面宠物');
     tray.setContextMenu(
       Menu.buildFromTemplate([
+        ...(APP_MODE ? [{ label: '打开控制中心', click: () => app.emit('dsh-pet:open-control') }, { type: 'separator' }] : []),
         ...pets.map((pet) => ({
           label: pet.name || pet.id,
           type: 'checkbox',
@@ -802,7 +804,7 @@ async function startTray() {
       ]),
     );
     // Windows 上 setContextMenu 只接管右键，左键默认什么都不做（macOS 相反：左键即弹菜单）
-    if (TRAY_PLATFORM.leftClickPopsMenu) tray.on('click', () => tray.popUpContextMenu());
+    if (TRAY_PLATFORM.leftClickPopsMenu) tray.on('click', () => APP_MODE ? app.emit('dsh-pet:open-control') : tray.popUpContextMenu());
   } catch (e) {
     console.error('[dsh-pet-desktop-helper] tray init failed:', String(e && e.message ? e.message : e));
   }
@@ -969,6 +971,10 @@ app.whenReady().then(() => {
   // 不建专属窗口——宠物窗口机制是透明小窗，不该承载常规网页浏览。URL 由渲染端从
   // configUrl 推导 = DSH webServer 端口，端口变化自动跟随
   const openSite = (url) => {
+    if (APP_MODE) {
+      app.emit('dsh-pet:open-control');
+      return;
+    }
     // 宿主注入的已鉴权站点 URL（含本进程启动令牌）：DSH 只在 `GET /` 接受它并换发绑定 authority 的
     // 浏览器 Cookie，裸 origin 在默认浏览器里必然 401（#87）。令牌等价登录态，所以**只在与目标同
     // origin 时**才启用——绝不让它被带去别的站点；取不到该变量（旧宿主 / standalone / 手写
@@ -1283,6 +1289,18 @@ app.on('before-quit', () => {
 
 app.on('window-all-closed', () => {
   // 托盘常驻：桌面上没有宠物也要留着（否则「全关掉」就再也切不回来，见 index.ts 的 desktopModeEverActive）
-  if (tray) return;
+  if (tray || APP_MODE) return;
   app.quit();
 });
+
+// In-process app saves reuse the same window factory without spawning another Electron.
+module.exports.refreshDesktop = (pets) => {
+  if (!APP_MODE) return;
+  process.env.DSH_PET_PETS = JSON.stringify(pets);
+  for (const win of [...windows.values()]) {
+    if (!win.isDestroyed()) win.destroy();
+  }
+  if (tray) { tray.destroy(); tray = null; }
+  createPetWindows();
+  void startTray();
+};

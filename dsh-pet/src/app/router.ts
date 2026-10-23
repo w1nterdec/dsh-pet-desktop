@@ -6,6 +6,7 @@ import { boundedRequest, MAX_REQUEST_BYTES, MAX_SETTINGS_BYTES } from '../standa
 import { rejectRequest, type RequestSecurity } from '../standalone/request-security';
 import { settingsHandler, testHandler, type StandaloneServerOptions } from '../standalone/server';
 import { settingsPage, settingsScript, settingsStyle } from '../standalone/settings-page';
+import { controlScript, controlStyle } from './control-page';
 
 interface RouterDeps {
   security: RequestSecurity;
@@ -13,6 +14,7 @@ interface RouterDeps {
   log(message: string): void;
   status(port: number): unknown;
   landingPage(port: number): string;
+  onConfigChange?(): void;
 }
 
 /** App HTTP boundary, isolated from Electron so malformed and untrusted requests can be tested. */
@@ -40,6 +42,11 @@ export function startRouter(
     // Only plugin calls may come from a file renderer, and even those require its capability.
     if (!deps.security.authorize(req, res, !!route)) return;
     const method = req.method ?? 'GET';
+    if (['PUT', 'POST'].includes(method) && /^\/dsh-pet-7340\/(config|pet-display|reload)$/.test(url.pathname)) {
+      res.once('finish', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) deps.onConfigChange?.();
+      });
+    }
     if (method === 'OPTIONS') {
       res.writeHead(204);
       res.end();
@@ -48,7 +55,12 @@ export function startRouter(
 
     const dispatch = async (request: IncomingMessage): Promise<void> => {
       const assets: Record<string, readonly [string, string]> = {
-        '/standalone-ai/': [settingsPage, 'text/html'],
+        '/standalone-ai/desktop.js': [controlScript, 'text/javascript'],
+        '/standalone-ai/desktop.css': [controlStyle, 'text/css'],
+        '/standalone-ai/': [
+          settingsPage.replace('<main><header>', '<main><a href="/">← 返回我的桌宠</a><header>'),
+          'text/html',
+        ],
         '/standalone-ai/settings.js': [settingsScript, 'text/javascript'],
         '/standalone-ai/settings.css': [settingsStyle, 'text/css'],
       };

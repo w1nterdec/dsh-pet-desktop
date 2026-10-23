@@ -1,5 +1,32 @@
 # dsh-pet 🐾
 
+## 本分支：独立桌面应用
+
+基于上游现有 Electron 桌宠运行时，增加原生「桌宠之家」控制中心。无需安装 DeepSeek Harness。
+
+- 在窗口中管理内置桌宠：添加、移除、改名、大小、显示状态、起始角落、边距、漫游及碎碎念开关，保存即时应用。
+- AI 设置在应用内打开，支持 OpenAI 兼容接口和 Anthropic；密钥保存在本机，自动调用默认关闭。
+- 关闭控制中心后桌宠继续运行。点击系统托盘可唤回窗口，右键托盘选择「退出」关闭整个应用。
+- 内置动画、拖拽、甩抛、动作菜单与多屏行为沿用上游实现。额外 pet pack 仍使用原有配置文件。
+- 提供 Windows x64 绿色目录及 NSIS 安装包（开始菜单、桌面快捷方式、卸载入口）。构建未配置代码签名。
+
+源码启动（Node.js ≥ 22.12）：
+
+```powershell
+cd dsh-pet
+npm install
+npm run ensure:electron
+npm run desktop
+```
+
+打包：先运行 `npm run build`，再执行 `npm run dist`（绿色目录）或 `npm run dist:installer`（安装包）。产物在 `dsh-pet/dist-app/`。
+
+验证：`npm test`、`npm run typecheck`、`npm run lint`；`npm run test:app` 使用独立临时数据启动 Electron，检查设置、增删宠物、动画播放和托盘恢复。可设置 `DSH_PET_APP_EXECUTABLE` 指向打包后的 exe，对分发产物执行相同检查。GitHub Actions 的 `Desktop app checks and Windows installer` 工作流提供可下载的安装包。
+
+原项目与 MIT 许可保留如下，源仓库：[PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet)。
+
+---
+
 <p align="center">
   <a href="https://www.npmjs.com/package/dsh-pet"><img alt="npm version" src="https://img.shields.io/npm/v/dsh-pet?label=npm&color=blue"></a>
   <a href="https://www.npmjs.com/package/dsh-pet"><img alt="npm monthly downloads" src="https://img.shields.io/npm/dm/dsh-pet?label=%E6%9C%88%E4%B8%8B%E8%BD%BD&color=brightgreen"></a>

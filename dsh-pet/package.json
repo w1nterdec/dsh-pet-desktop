@@ -79,6 +79,8 @@
     "start:desktop": "node scripts/start-desktop.mjs",
     "standalone": "node lib/standalone.js",
     "start:app": "node scripts/start-app.mjs",
+    "desktop": "npm run build && npm run start:app",
+    "dist:installer": "node scripts/dist.mjs nsis",
     "dist": "node scripts/dist.mjs",
     "dev:mock": "node scripts/dev/mock-server.mjs",
     "build": "node scripts/prepare.js",
@@ -90,7 +92,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:ui": "node --test scripts/tests/*.test.mjs"
+    "test:ui": "node --test scripts/tests/*.test.mjs",
+    "test:app": "node scripts/tests/app.smoke.mjs"
   },
   "license": "MIT",
   "engines": {

@@ -26,9 +26,11 @@ const ELECTRON_REL =
       : 'electron';
 
 const dshHome = process.env.DSH_HOME || join(homedir(), '.dsh');
-const electron = [process.env.DSH_PET_ELECTRON_PATH, join(dshHome, 'electron', ELECTRON_REL)].find(
-  (value) => value && existsSync(value),
-);
+const electron = [
+  process.env.DSH_PET_ELECTRON_PATH,
+  join(dshHome, 'electron', ELECTRON_REL),
+  join(root, '..', '.tools', 'runtime', 'electron', ELECTRON_REL),
+].find((value) => value && existsSync(value));
 if (!electron) {
   console.error('[start-app] 找不到 Electron：先跑 `npm run ensure:electron` 或设置 DSH_PET_ELECTRON_PATH。');
   process.exit(1);
@@ -39,4 +41,8 @@ const env = { ...process.env };
 delete env.ELECTRON_RUN_AS_NODE;
 
 const child = spawn(electron, [join(root, 'lib', 'app.js')], { cwd: root, env, stdio: 'inherit' });
+child.on('error', (error) => {
+  console.error('[start-app] 启动失败：', error.message);
+  process.exit(1);
+});
 child.on('exit', (code) => process.exit(code ?? 0));
