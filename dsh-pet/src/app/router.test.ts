@@ -252,6 +252,10 @@ test('native application settings and actions require authentication, reject for
     );
     assert.equal(actions, 0);
     assert.deepEqual(await (await fetch(base + '/app/info', { headers })).json(), { version: 'test' });
+    assert.deepEqual(
+      await (await fetch(base + '/app/preferences', { method: 'PUT', headers, body: '{"theme":"dark"}' })).json(),
+      { theme: 'dark' },
+    );
     assert.equal(
       (await fetch(base + '/app/preferences', { method: 'PUT', headers, body: 'x'.repeat(MAX_SETTINGS_BYTES + 1) }))
         .status,

@@ -71,7 +71,8 @@ export function startRouter(
             (method === 'POST' && url.pathname === '/app/actions')
           ) {
             let body = '';
-            for await (const chunk of request) body += String(chunk);
+            // boundedRequest replays a Node Readable; some bundled Node declarations omit this symbol.
+            for await (const chunk of request as IncomingMessage & AsyncIterable<Uint8Array>) body += String(chunk);
             const input = JSON.parse(body);
             data =
               url.pathname === '/app/preferences'

@@ -1,6 +1,6 @@
 {
   "name": "dsh-pet",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "独立桌面宠物应用：原生控制中心、透明动画、宠物管理、AI 对话与本机设置",
   "icon": "assets/logo.png",
   "keywords": [

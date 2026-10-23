@@ -23,7 +23,7 @@
 
 ## 安装
 
-在 [Releases](https://github.com/w1nterdec/dsh-pet-desktop/releases/latest) 下载 `DSH-Pet-Setup-0.4.0-x64.exe`，运行安装向导即可。发行版本目前针对 **Windows 10/11 x64** 验证；macOS / Linux 的上游运行逻辑仍保留，本项目尚未提供这两个平台的安装包。
+在 [Releases](https://github.com/w1nterdec/dsh-pet-desktop/releases/latest) 下载 `DSH-Pet-Setup-0.4.1-x64.exe`，运行安装向导即可。发行版本目前针对 **Windows 10/11 x64** 验证；macOS / Linux 的上游运行逻辑仍保留，本项目尚未提供这两个平台的安装包。
 
 安装包暂未进行代码签名。无需管理员权限；默认安装到当前用户目录。
 
@@ -80,7 +80,7 @@ npm run test:app
 # 绿色目录：dist-app/win-unpacked/
 npm run dist
 
-# 安装包：dist-app/DSH-Pet-Setup-0.4.0-x64.exe
+# 安装包：dist-app/DSH-Pet-Setup-0.4.1-x64.exe
 npm run dist:installer
 
 # 对打包后的应用执行相同的原生交互验证
