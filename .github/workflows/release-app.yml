@@ -44,7 +44,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.inputs.tag || github.event.release.tag_name }}
-        run: gh release upload $env:RELEASE_TAG dist-app/DSH-Pet-Setup-*.exe --clobber
+        run: |
+          $installer = Get-ChildItem -LiteralPath dist-app -Filter 'DSH-Pet-Setup-*.exe' | Select-Object -First 1
+          $digest = (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          "$digest  $($installer.Name)" | Set-Content -LiteralPath dist-app/SHA256SUMS.txt -Encoding ascii
+          gh release upload $env:RELEASE_TAG $installer.FullName dist-app/SHA256SUMS.txt --clobber
       - uses: actions/upload-artifact@v4
         with:
           name: DSH-Pet-Installer
