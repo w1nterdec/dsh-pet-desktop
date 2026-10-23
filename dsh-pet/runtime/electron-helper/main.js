@@ -86,7 +86,7 @@ const APP_TOKEN = APP_MODE ? process.env.DSH_PET_APP_TOKEN : undefined;
 app.setName('dsh-pet-electron-helper');
 // 应用模式只改**数据目录**，不改应用名：独立应用与 DSH 内的 helper 若共用同一个 userData，
 // 两个 Chromium 进程会抢同一份 profile（单例锁）互相踢。名字不动也就不会触发上面那个防漂移测试。
-if (APP_MODE) app.setPath('userData', path.join(app.getPath('appData'), 'dsh-pet'));
+if (APP_MODE) app.setPath('userData', process.env.DSH_PET_APP_USER_DATA || path.join(app.getPath('appData'), 'dsh-pet'));
 
 /** DPI 探测子进程模式：不建窗口，只把主屏 scaleFactor 打到 stdout 就退出（见 probePrimaryScale） */
 const DPI_PROBE = process.env.DSH_PET_DPI_PROBE === '1';

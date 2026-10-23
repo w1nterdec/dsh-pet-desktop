@@ -62,6 +62,7 @@ test('only the local main renderer receives the capability, scoped to the API or
     const frame = { url: page, parent: null };
     assert.equal(send(endpoint, frame)['X-DSH-Pet-Token'], 'private-token');
     assert.equal(send('http://127.0.0.1:3080/standalone-ai/settings', frame)['X-DSH-Pet-Token'], 'private-token');
+    assert.equal(send('http://127.0.0.1:3080/app/preferences', frame)['X-DSH-Pet-Token'], 'private-token');
     assert.equal(send('https://example.invalid/standalone-ai/settings', frame)['X-DSH-Pet-Token'], undefined);
     assert.equal(send(endpoint, { url: page, parent: {} })['X-DSH-Pet-Token'], undefined);
   }

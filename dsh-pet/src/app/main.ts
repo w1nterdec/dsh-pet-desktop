@@ -42,6 +42,8 @@ import { installDesktopAuth, type DesktopSession } from './desktop-auth';
 import { startRouter } from './router';
 import { installControlWindow } from './control-window';
 import { controlPage } from './control-page';
+import { createPreferenceStore } from './preferences';
+import { createAppService } from './app-service';
 
 /**
  * `electron` 由 Electron 运行时提供，**不是本包的依赖**。只声明实际用到的成员：
@@ -76,7 +78,7 @@ const helperMain = join(packageRoot, 'runtime', 'electron-helper', 'main.js');
 const log = (message: string): void => console.log(`[dsh-pet-app] ${message}`);
 
 /** 单实例：第二次双击直接退出（共用 userData 的 Chromium profile 会互踢） */
-app.setPath('userData', join(app.getPath('appData'), 'dsh-pet'));
+app.setPath('userData', process.env.DSH_PET_APP_USER_DATA || join(app.getPath('appData'), 'dsh-pet'));
 const locked = app.requestSingleInstanceLock();
 if (!locked) {
   app.exit(0);
@@ -135,12 +137,22 @@ async function boot(): Promise<void> {
   });
 
   let helper: { refreshDesktop(pets: Array<{ id: string; size: number }>): void } | undefined;
+  const store = createPreferenceStore(join(dshHomeDir(), 'dsh-pet', 'desktop-settings.json'));
+  const appService = createAppService({
+    home: dshHomeDir(),
+    root: packageRoot,
+    version: packageVersion(packageRoot),
+    store,
+    changed: () => helper?.refreshDesktop(desktopPets()),
+    flushLogs: () => logger.flush(),
+  });
   const server = await startRouter(routes, {
     security,
     ai,
     log,
     status,
     landingPage,
+    appService,
     onConfigChange: () => helper?.refreshDesktop(desktopPets()),
   });
   port = server.port;
@@ -179,7 +191,7 @@ async function boot(): Promise<void> {
       join(packageRoot, 'runtime/electron-helper/index.html'),
       security.token,
     );
-    installControlWindow(origin, join(packageRoot, 'assets/logo.png'), security.token);
+    installControlWindow(origin, join(packageRoot, 'assets/logo.png'), security.token, store);
   });
   process.env.DSH_PET_APP_TOKEN = security.token;
   try {

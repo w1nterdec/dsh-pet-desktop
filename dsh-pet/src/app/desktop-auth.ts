@@ -31,7 +31,10 @@ export function installDesktopAuth(session: DesktopSession, origin: string, rend
       const frame = details.frame;
       const page = frame ? new URL(frame.url) : undefined;
       const controlPage = page?.origin === origin && ['/', '/standalone-ai/'].includes(page.pathname);
-      const localApi = target.pathname.startsWith('/dsh-pet-7340/') || target.pathname.startsWith('/standalone-ai/');
+      const localApi =
+        target.pathname.startsWith('/dsh-pet-7340/') ||
+        target.pathname.startsWith('/standalone-ai/') ||
+        target.pathname.startsWith('/app/');
       if (
         target.origin === origin &&
         frame?.parent === null &&

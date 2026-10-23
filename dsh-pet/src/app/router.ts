@@ -5,8 +5,10 @@ import type { RegisteredRoute } from '../standalone/context';
 import { boundedRequest, MAX_REQUEST_BYTES, MAX_SETTINGS_BYTES } from '../standalone/request-body';
 import { rejectRequest, type RequestSecurity } from '../standalone/request-security';
 import { settingsHandler, testHandler, type StandaloneServerOptions } from '../standalone/server';
-import { settingsPage, settingsScript, settingsStyle } from '../standalone/settings-page';
+import { settingsScript, settingsStyle } from '../standalone/settings-page';
 import { controlScript, controlStyle } from './control-page';
+import type { AppService } from './app-service';
+import { appAiPage, appAiScript, appAiStyle } from './ai-page';
 
 interface RouterDeps {
   security: RequestSecurity;
@@ -15,6 +17,7 @@ interface RouterDeps {
   status(port: number): unknown;
   landingPage(port: number): string;
   onConfigChange?(): void;
+  appService?: AppService;
 }
 
 /** App HTTP boundary, isolated from Electron so malformed and untrusted requests can be tested. */
@@ -54,13 +57,42 @@ export function startRouter(
     }
 
     const dispatch = async (request: IncomingMessage): Promise<void> => {
+      if (url.pathname.startsWith('/app/')) {
+        if (!deps.appService) {
+          rejectRequest(res, 404, '应用接口不可用');
+          return;
+        }
+        try {
+          let data: unknown;
+          if (method === 'GET' && url.pathname === '/app/info') data = deps.appService.info();
+          else if (method === 'GET' && url.pathname === '/app/preferences') data = deps.appService.preferences();
+          else if (
+            (method === 'PUT' && url.pathname === '/app/preferences') ||
+            (method === 'POST' && url.pathname === '/app/actions')
+          ) {
+            let body = '';
+            for await (const chunk of request) body += String(chunk);
+            const input = JSON.parse(body);
+            data =
+              url.pathname === '/app/preferences'
+                ? deps.appService.savePreferences(input)
+                : await deps.appService.action(input);
+          } else {
+            rejectRequest(res, 405, '不支持的应用请求');
+            return;
+          }
+          sendText(res, 200, 'application/json', JSON.stringify(data));
+        } catch {
+          rejectRequest(res, 400, '操作未完成，请检查配置文件、输入或系统权限后重试');
+        }
+        return;
+      }
       const assets: Record<string, readonly [string, string]> = {
         '/standalone-ai/desktop.js': [controlScript, 'text/javascript'],
         '/standalone-ai/desktop.css': [controlStyle, 'text/css'],
-        '/standalone-ai/': [
-          settingsPage.replace('<main><header>', '<main><a href="/">← 返回我的桌宠</a><header>'),
-          'text/html',
-        ],
+        '/standalone-ai/': [appAiPage, 'text/html'],
+        '/standalone-ai/ai.js': [appAiScript, 'text/javascript'],
+        '/standalone-ai/ai.css': [controlStyle + appAiStyle, 'text/css'],
         '/standalone-ai/settings.js': [settingsScript, 'text/javascript'],
         '/standalone-ai/settings.css': [settingsStyle, 'text/css'],
       };
@@ -94,7 +126,10 @@ export function startRouter(
     const bodyMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
     void (async () => {
       if (hasBody || bodyMethod) {
-        const limit = url.pathname === '/standalone-ai/settings' ? MAX_SETTINGS_BYTES : MAX_REQUEST_BYTES;
+        const limit =
+          url.pathname === '/standalone-ai/settings' || url.pathname.startsWith('/app/')
+            ? MAX_SETTINGS_BYTES
+            : MAX_REQUEST_BYTES;
         const bounded = await boundedRequest(req, res, limit);
         if (bounded) await dispatch(bounded);
       } else await dispatch(req);

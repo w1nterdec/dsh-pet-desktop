@@ -215,3 +215,59 @@ test('desktop assets are available and only successful configuration writes refr
     await server.close();
   }
 });
+
+test('native application settings and actions require authentication, reject foreign origins and cap payloads', async () => {
+  let actions = 0;
+  const security = createRequestSecurity();
+  const server = await startRouter([], {
+    security,
+    log: () => {},
+    status: () => ({}),
+    landingPage: () => '',
+    appService: {
+      info: () => ({ version: 'test' }),
+      preferences: () => ({ theme: 'light' }),
+      savePreferences: (input) => input,
+      action: async (input) => {
+        if ((input as { action: string }).action !== 'open-data') throw new Error('invalid');
+        actions++;
+        return { ok: true };
+      },
+    },
+  });
+  const base = 'http://127.0.0.1:' + server.port;
+  const headers = { 'X-DSH-Pet-Token': security.token, 'Content-Type': 'application/json' };
+  try {
+    for (const path of ['/app/info', '/app/preferences']) assert.equal((await fetch(base + path)).status, 403);
+    assert.equal((await fetch(base + '/app/actions', { method: 'POST', body: '{"action":"quit"}' })).status, 403);
+    assert.equal(
+      (
+        await fetch(base + '/app/actions', {
+          method: 'POST',
+          headers: { ...headers, Origin: 'https://untrusted.invalid' },
+          body: '{"action":"open-data"}',
+        })
+      ).status,
+      403,
+    );
+    assert.equal(actions, 0);
+    assert.deepEqual(await (await fetch(base + '/app/info', { headers })).json(), { version: 'test' });
+    assert.equal(
+      (await fetch(base + '/app/preferences', { method: 'PUT', headers, body: 'x'.repeat(MAX_SETTINGS_BYTES + 1) }))
+        .status,
+      413,
+    );
+    assert.equal((await fetch(base + '/app/preferences', { method: 'POST', headers, body: '{}' })).status, 405);
+    assert.equal(
+      (await fetch(base + '/app/actions', { method: 'POST', headers, body: '{"action":"bad"}' })).status,
+      400,
+    );
+    assert.equal(
+      (await fetch(base + '/app/actions', { method: 'POST', headers, body: '{"action":"open-data"}' })).status,
+      200,
+    );
+    assert.equal(actions, 1);
+  } finally {
+    await server.close();
+  }
+});

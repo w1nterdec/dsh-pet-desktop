@@ -29,6 +29,8 @@ function publicRead(req: IncomingMessage): boolean {
       '/standalone-ai/settings.css',
       '/standalone-ai/desktop.js',
       '/standalone-ai/desktop.css',
+      '/standalone-ai/ai.js',
+      '/standalone-ai/ai.css',
     ].includes(path) || /^\/dsh-pet-\d+\//.test(path)
   );
 }

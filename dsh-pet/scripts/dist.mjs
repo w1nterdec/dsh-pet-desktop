@@ -98,6 +98,7 @@ console.log(`[dist] target:        win:${target}`);
 // 走 shell 传参会把参数切碎；node 直接 spawn 没有这层转义问题。
 const cli = join(root, 'node_modules', 'electron-builder', 'out', 'cli', 'cli.js');
 const args = [cli, '--win', target];
+if (process.env.DSH_PET_DIST_OUTPUT) args.push(`--config.directories.output=${resolve(root, process.env.DSH_PET_DIST_OUTPUT)}`);
 if (electronDist) args.push(`--config.electronDist=${electronDist}`);
 const child = spawn(process.execPath, args, {
   cwd: root,
