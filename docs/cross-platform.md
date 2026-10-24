@@ -2,6 +2,8 @@
 
 本次扩展增加原生平台构建入口。Windows 延续 Electron；macOS、Linux 使用同一应用与配置；Android 使用独立原生应用。构建支持不代表已通过所有硬件、桌面环境与手机厂商的兼容认证。
 
+2026-10-24 验证记录：[桌面 CI](https://github.com/w1nterdec/dsh-pet-desktop/actions/runs/40084311239) 的 Windows x64、macOS Intel / Apple Silicon、Linux X11 构建与原生交互检查全部通过；[Android CI](https://github.com/w1nterdec/dsh-pet-desktop/actions/runs/40084449744) 的编译、单元测试、Lint 与 APK 产物上传通过。预览包可从对应运行的 Artifacts 下载；这不表示已完成代码签名、公证或商店发布。
+
 ## 桌面平台
 
 在 `dsh-pet/` 中执行 `npm run build`，再在对应系统执行：
