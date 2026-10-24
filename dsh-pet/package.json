@@ -1,6 +1,6 @@
 {
   "name": "dsh-pet",
-  "version": "0.4.1",
+  "version": "0.5.0-beta.1",
   "description": "独立桌面宠物应用：原生控制中心、透明动画、宠物管理、AI 对话与本机设置",
   "icon": "assets/logo.png",
   "keywords": [
@@ -93,7 +93,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:ui": "node --test scripts/tests/*.test.mjs",
-    "test:app": "node scripts/tests/app.smoke.mjs"
+    "test:app": "node scripts/tests/app.smoke.mjs",
+    "test:platform": "node --test scripts/tests/dist-options.test.mjs",
+    "test:media": "node --experimental-strip-types --import ./scripts/test-register.mjs --test scripts/tests/import-media.integration.mjs"
   },
   "license": "MIT",
   "engines": {

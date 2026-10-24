@@ -1,0 +1,64 @@
+# 跨平台构建与验证
+
+本次扩展增加原生平台构建入口。Windows 延续 Electron；macOS、Linux 使用同一应用与配置；Android 使用独立原生应用。构建支持不代表已通过所有硬件、桌面环境与手机厂商的兼容认证。
+
+## 桌面平台
+
+在 `dsh-pet/` 中执行 `npm run build`，再在对应系统执行：
+
+```sh
+# Windows：安装向导 / 绿色目录
+node scripts/dist.mjs nsis
+node scripts/dist.mjs dir
+
+# macOS：DMG / ZIP
+node scripts/dist.mjs dmg
+node scripts/dist.mjs zip
+
+# Linux：AppImage / Debian / tar.gz
+node scripts/dist.mjs AppImage
+node scripts/dist.mjs deb
+node scripts/dist.mjs tar.gz
+```
+
+默认架构为当前 Node.js 架构；`DSH_PET_TARGET_ARCH=x64` 或 `arm64` 可显式选择。跨架构构建不会误用当前架构的缓存 Electron。`DSH_PET_ELECTRON_DIST` 可以提供对应目标架构的解压运行时；没有缓存时，显式设置 `DSH_PET_ALLOW_ELECTRON_DOWNLOAD=1` 允许下载。
+
+macOS 应在 macOS 上打包 DMG；Linux 应在 Linux 上构建 Debian/AppImage。CI 增加 macOS Intel、Apple Silicon 和 Linux x64 的构建与原生窗口测试；这些工作流需要推送后实际运行，不能把本机配置校验当作对应平台的测试结果。
+
+### macOS
+
+- 控制中心保留 Dock 入口，并提供系统编辑菜单、Command+C/V、Command+Q 与再次激活恢复。
+- 独立应用的托盘失败会唤回控制中心；关闭窗口可正常退出。
+- 正式对外分发需要 Apple Developer 证书、代码签名与 notarization；仓库不包含任何证书。没有签名和公证的开发包不能宣称通过 Gatekeeper。
+- 桌面 Electron 继续使用 Chromium 支持的 VP9 WebM 透明视频，不需要另行生成 Safari 专用 HEVC 素材。
+
+### Linux
+
+- 优先使用 X11；Wayland 会话如果提供 `DISPLAY`，应用默认选择 XWayland。用户显式传入的 `--ozone-platform` 优先。
+- 纯 Wayland 限制应用主动定位窗口、全局光标和鼠标穿透；控制中心运行信息会提示能力限制。不同 compositor 的置顶、任务栏和托盘实现仍需实测。
+- GNOME 可能需要 AppIndicator 扩展才能展示托盘。没有可见托盘时，可以从桌宠右键菜单打开控制中心；不要在没有恢复入口的环境启用隐藏启动。
+- AppImage 可能需要发行版提供 FUSE；也可使用 Debian 安装包或解压目录。
+- 自启动遵循 XDG Autostart，使用 `$XDG_CONFIG_HOME/autostart/com.dshpet.desktop.desktop`（默认 `~/.config/autostart/`）。AppImage 使用原始 `APPIMAGE` 路径，而不是临时挂载路径；移动应用后需要重新开启自启动。
+
+## Android
+
+见 [Android 说明](../android/README.md)。支持 Android 9/API 28 起的 GIF、动态 WebP、静态图片、PNG 序列与动作包；视频和 Live2D/VRM 不在当前 Android 播放器的格式范围内。
+
+原生版本采用用户手动启动的前台服务、明确的常驻通知和停止入口；不会监听开机广播，也不请求无障碍、全盘存储或网络权限。素材与设置与桌面版分别存储，不自动同步，暂未接入桌面端 AI 对话。
+
+## 验证入口
+
+```sh
+cd dsh-pet
+npm run typecheck
+npm run lint
+npm test
+npm run test:platform
+npm run test:app
+# 设置 DSH_PET_FFMPEG_PATH 后可额外运行真实媒体转换测试
+npm run test:media
+```
+
+`test:app` 使用临时用户目录，覆盖原生窗口、配置保存、多开、视频解码、素材导入与显示/隐藏/移除、收起与托盘恢复。可设置 `DSH_PET_APP_EXECUTABLE` 指向打包后的可执行文件。Linux CI 在 Xvfb 中运行；`DSH_PET_TEST_NO_SANDBOX=1` 仅用于隔离测试环境，正式应用保留 Chromium 沙箱。
+
+发布验收还应覆盖真实 macOS/Linux/Android 设备、不同 DPI/多屏、休眠恢复、Android 权限撤销与厂商后台限制；签名密钥和外部商店发布单独管理。

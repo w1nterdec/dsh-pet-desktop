@@ -4,12 +4,36 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
 import { _electron } from 'playwright';
+import { existsSync } from 'node:fs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const packaged = process.env.DSH_PET_APP_EXECUTABLE;
 const executablePath =
-  packaged || process.env.DSH_PET_ELECTRON_PATH || resolve(root, '../.tools/runtime/electron/electron.exe');
+  packaged ||
+  process.env.DSH_PET_ELECTRON_PATH ||
+  [
+    join(
+      root,
+      '../.tools/runtime/electron',
+      process.platform === 'darwin'
+        ? 'Electron.app/Contents/MacOS/Electron'
+        : process.platform === 'win32'
+          ? 'electron.exe'
+          : 'electron',
+    ),
+    join(
+      process.env.DSH_HOME || join(homedir(), '.dsh'),
+      'electron',
+      process.platform === 'darwin'
+        ? 'Electron.app/Contents/MacOS/Electron'
+        : process.platform === 'win32'
+          ? 'electron.exe'
+          : 'electron',
+    ),
+  ].find(existsSync);
+assert.ok(executablePath, 'Electron runtime is available; run npm run ensure:electron first');
 const home = await mkdtemp(join(tmpdir(), 'dsh-pet-app-test-'));
 const output = resolve(root, '../.tools/qa');
 await mkdir(output, { recursive: true });
@@ -24,7 +48,10 @@ await mkdir(env.APPDATA, { recursive: true });
 await mkdir(env.DSH_PET_APP_USER_DATA, { recursive: true });
 const application = await _electron.launch({
   executablePath,
-  args: packaged ? [] : [join(root, 'lib/app.js')],
+  args: [
+    ...(process.env.DSH_PET_TEST_NO_SANDBOX === '1' ? ['--no-sandbox'] : []),
+    ...(packaged ? [] : [join(root, 'lib/app.js')]),
+  ],
   cwd: packaged ? home : root,
   env,
   timeout: 60000,
@@ -101,6 +128,28 @@ try {
   await control.getByRole('button', { name: '召回桌宠', exact: false }).click();
   await control.waitForFunction(() => document.getElementById('toast').textContent.includes('已回到'));
 
+  // Native file dialogs are replaced only inside this isolated test process.
+  const importFile = join(root, 'assets/webm/待机呼吸休闲.webm');
+  await application.evaluate(({ dialog }, file) => {
+    dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] });
+  }, importFile);
+  await control.getByRole('button', { name: '导入素材包 / 媒体', exact: true }).click();
+  await control.waitForFunction(() => document.querySelector('#imported-pets input')?.value === '待机呼吸休闲');
+  await control.getByRole('textbox', { name: '导入桌宠名称', exact: true }).fill('导入的小伙伴');
+  await control.getByRole('spinbutton', { name: '导入桌宠大小', exact: true }).fill('280');
+  await control.getByRole('button', { name: '保存桌宠', exact: true }).click();
+  await control.waitForFunction(() => document.getElementById('import-message').textContent === '桌宠列表已更新');
+  await control.screenshot({ path: join(output, 'imported-pet-manager.png'), fullPage: true });
+  await control.getByRole('button', { name: '隐藏', exact: true }).click();
+  await control.getByRole('button', { name: '显示', exact: true }).waitFor();
+  await control.getByRole('button', { name: '显示', exact: true }).click();
+  await control.getByRole('button', { name: '隐藏', exact: true }).waitFor();
+  await application.evaluate(({ dialog }) => {
+    dialog.showMessageBox = async () => ({ response: 1, checkboxChecked: false });
+  });
+  await control.locator('#imported-pets').getByRole('button', { name: '移除', exact: true }).click();
+  await control.waitForFunction(() => !document.getElementById('imported-pets').children.length);
+
   const nativeCount = await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
   await application.evaluate(({ BrowserWindow }) =>
     BrowserWindow.getAllWindows()
@@ -125,7 +174,9 @@ try {
     ),
     true,
   );
-  console.log('PASS: native window, AI settings auth, save, add/remove, video decode, hide and tray recovery');
+  console.log(
+    'PASS: native window, AI settings auth, save, add/remove, video decode, pet import/toggle/remove, hide and tray recovery',
+  );
 } finally {
   await application.close();
   await rm(home, { recursive: true, force: true });

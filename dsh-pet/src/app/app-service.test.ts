@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 import { createAppService, type NativeServices } from './app-service.ts';
 import { createPreferenceStore, DEFAULT_PREFERENCES } from './preferences.ts';
+import { createLinuxStartup } from './linux-startup.ts';
 
 test('native backup exports only pet settings, imports with confirmation and preserves unrelated user configuration', async () => {
   const home = mkdtempSync(join(tmpdir(), 'pet-service-'));
@@ -49,6 +50,7 @@ test('native backup exports only pet settings, imports with confirmation and pre
     },
     flushLogs: async () => {},
     native,
+    linuxStartup: createLinuxStartup({ configHome: join(home, 'xdg'), executable: process.execPath }),
   });
   try {
     writeFileSync(join(data, 'standalone-ai.json'), JSON.stringify({ apiKey: 'PRIVATE_KEY_SENTINEL' }));
@@ -91,6 +93,65 @@ test('native backup exports only pet settings, imports with confirmation and pre
     await service.action({ action: 'open-data', path: 'C:/untrusted' });
     assert.deepEqual(opened, [data]);
     await assert.rejects(service.action({ action: 'arbitrary-executable' }));
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+});
+
+test('imported pets can be added, hidden, shown and removed without modifying the main configuration', async () => {
+  const home = mkdtempSync(join(tmpdir(), 'pet-service-import-'));
+  const source = join(home, 'companion.webm');
+  writeFileSync(source, Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x80]));
+  let changes = 0,
+    answer = 0;
+  const native: NativeServices = {
+    app: {
+      isPackaged: false,
+      getLoginItemSettings: () => ({ openAtLogin: false }),
+      setLoginItemSettings: () => {},
+      quit: () => {},
+      relaunch: () => {},
+    },
+    shell: { openPath: async () => '' },
+    dialog: {
+      showSaveDialog: async () => ({ canceled: true }),
+      showOpenDialog: async () => ({ canceled: false, filePaths: [source] }),
+      showMessageBox: async () => ({ response: answer }),
+    },
+  };
+  const service = createAppService({
+    home,
+    root: resolve('.'),
+    version: 'test',
+    store: createPreferenceStore(join(home, 'settings.json')),
+    changed: () => {
+      changes++;
+    },
+    flushLogs: async () => {},
+    native,
+  });
+  try {
+    const result = (await service.action({ action: 'import-pet' })) as { imported: { id: string } };
+    const id = result.imported.id;
+    const list = () => (service.info() as { importedPets: Array<{ id: string; display: string }> }).importedPets;
+    assert.equal(list()[0].id, id);
+    await assert.rejects(service.action({ action: 'update-imported-pet', id, name: '', size: 240 }));
+    await assert.rejects(service.action({ action: 'update-imported-pet', id, name: 'Fox', size: 10000 }));
+    await service.action({ action: 'update-imported-pet', id, name: '小狐', size: 320 });
+    assert.equal((service.info() as { importedPets: Array<{ name: string; size: number }> }).importedPets[0].size, 320);
+    await service.action({ action: 'toggle-imported-pet', id });
+    assert.equal(list()[0].display, 'none');
+    await service.action({ action: 'toggle-imported-pet', id });
+    assert.equal(list()[0].display, 'desktop');
+    await assert.rejects(service.action({ action: 'remove-imported-pet', id: '../main-config' }));
+    assert.deepEqual(await service.action({ action: 'remove-imported-pet', id }), { ok: true, canceled: true });
+    assert.equal(list().length, 1);
+    answer = 1;
+    await service.action({ action: 'remove-imported-pet', id });
+    assert.equal(list().length, 0);
+    assert.equal(changes, 5);
+    const removed = JSON.parse(readFileSync(join(home, 'dsh-pet/pet', `${id}.removed.json`), 'utf8'));
+    assert.equal(removed.pets[0].id, id);
   } finally {
     rmSync(home, { recursive: true, force: true });
   }

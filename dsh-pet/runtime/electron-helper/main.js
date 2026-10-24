@@ -70,6 +70,18 @@ const { buildDeskGeometry } = require('./desktop-geometry.js');
 // 允许无用户手势直接播放（余额动画等）
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
+// XWayland supports desktop positioning; native Wayland deliberately limits it.
+// Respect an explicit backend chosen by the user.
+if (
+  process.platform === 'linux' &&
+  process.env.DISPLAY &&
+  (process.env.WAYLAND_DISPLAY || process.env.XDG_SESSION_TYPE === 'wayland') &&
+  !app.commandLine.hasSwitch('ozone-platform')
+) {
+  app.commandLine.appendSwitch('ozone-platform', 'x11');
+  process.env.DSH_PET_WINDOW_BACKEND = 'x11';
+}
+
 // 显式定名：Helper 是被 `electron.exe <main.js>` 直接拉起的，Electron 取不到 app 名会回落成
 // "Electron"，userData 便落到 %APPDATA%\Electron —— 那是所有这么跑的 Electron 脚本的公共目录，
 // 我们的 DPI 缓存与 Chromium profile 都会和别人混在一起。必须赶在任何 getPath('userData') 之前设。
@@ -86,7 +98,8 @@ const APP_TOKEN = APP_MODE ? process.env.DSH_PET_APP_TOKEN : undefined;
 app.setName('dsh-pet-electron-helper');
 // 应用模式只改**数据目录**，不改应用名：独立应用与 DSH 内的 helper 若共用同一个 userData，
 // 两个 Chromium 进程会抢同一份 profile（单例锁）互相踢。名字不动也就不会触发上面那个防漂移测试。
-if (APP_MODE) app.setPath('userData', process.env.DSH_PET_APP_USER_DATA || path.join(app.getPath('appData'), 'dsh-pet'));
+if (APP_MODE)
+  app.setPath('userData', process.env.DSH_PET_APP_USER_DATA || path.join(app.getPath('appData'), 'dsh-pet'));
 
 /** DPI 探测子进程模式：不建窗口，只把主屏 scaleFactor 打到 stdout 就退出（见 probePrimaryScale） */
 const DPI_PROBE = process.env.DSH_PET_DPI_PROBE === '1';
@@ -793,7 +806,9 @@ async function startTray() {
     tray.setToolTip('dsh-pet 桌面宠物');
     tray.setContextMenu(
       Menu.buildFromTemplate([
-        ...(APP_MODE ? [{ label: '打开控制中心', click: () => app.emit('dsh-pet:open-control') }, { type: 'separator' }] : []),
+        ...(APP_MODE
+          ? [{ label: '打开控制中心', click: () => app.emit('dsh-pet:open-control') }, { type: 'separator' }]
+          : []),
         ...pets.map((pet) => ({
           label: pet.name || pet.id,
           type: 'checkbox',
@@ -804,9 +819,11 @@ async function startTray() {
       ]),
     );
     // Windows 上 setContextMenu 只接管右键，左键默认什么都不做（macOS 相反：左键即弹菜单）
-    if (TRAY_PLATFORM.leftClickPopsMenu) tray.on('click', () => APP_MODE ? app.emit('dsh-pet:open-control') : tray.popUpContextMenu());
+    if (TRAY_PLATFORM.leftClickPopsMenu)
+      tray.on('click', () => (APP_MODE ? app.emit('dsh-pet:open-control') : tray.popUpContextMenu()));
   } catch (e) {
     console.error('[dsh-pet-desktop-helper] tray init failed:', String(e && e.message ? e.message : e));
+    if (APP_MODE) app.emit('dsh-pet:tray-unavailable');
   }
 }
 
@@ -845,7 +862,7 @@ app.whenReady().then(() => {
 
   // macOS：桌面宠物不该占 Dock——Dock 里多一个图标只会碍事。**不跟 trayEnabled 联动**：
   // 宠物本体的右键菜单在，桌面侧仍能操作（只有「宠物全不在桌面」时才真正没有入口，那是另一件事）。
-  if (TRAY_PLATFORM.hideDock && app.dock) app.dock.hide();
+  if (!APP_MODE && TRAY_PLATFORM.hideDock && app.dock) app.dock.hide();
 
   // 托盘：不 await（建窗与建托盘互不依赖），内部自己等 bridge 回调服务就绪
   void startTray();
@@ -1300,7 +1317,10 @@ module.exports.refreshDesktop = (pets) => {
   for (const win of [...windows.values()]) {
     if (!win.isDestroyed()) win.destroy();
   }
-  if (tray) { tray.destroy(); tray = null; }
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
   createPetWindows();
   void startTray();
 };

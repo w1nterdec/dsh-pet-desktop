@@ -9,6 +9,7 @@ import { settingsScript, settingsStyle } from '../standalone/settings-page';
 import { controlScript, controlStyle } from './control-page';
 import type { AppService } from './app-service';
 import { appAiPage, appAiScript, appAiStyle } from './ai-page';
+import { PetImportError } from './import-error';
 
 interface RouterDeps {
   security: RequestSecurity;
@@ -83,8 +84,12 @@ export function startRouter(
             return;
           }
           sendText(res, 200, 'application/json', JSON.stringify(data));
-        } catch {
-          rejectRequest(res, 400, '操作未完成，请检查配置文件、输入或系统权限后重试');
+        } catch (error) {
+          rejectRequest(
+            res,
+            400,
+            error instanceof PetImportError ? error.message : '操作未完成，请检查配置文件、输入或系统权限后重试',
+          );
         }
         return;
       }

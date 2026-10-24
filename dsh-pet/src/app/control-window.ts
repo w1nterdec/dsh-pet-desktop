@@ -23,11 +23,12 @@ export function installControlWindow(origin: string, icon: string, token: string
   const { app, BrowserWindow, Menu, screen } = createRequire(import.meta.url)('electron') as {
     app: { on(event: string, listener: () => void): void; quit(): void };
     BrowserWindow: new (options: Record<string, unknown>) => ControlWindow;
-    Menu: { setApplicationMenu(menu: null): void };
+    Menu: { setApplicationMenu(menu: unknown): void; buildFromTemplate(template: unknown[]): unknown };
     screen: { getAllDisplays(): Array<{ workArea: { x: number; y: number; width: number; height: number } }> };
   };
   let window: ControlWindow | undefined;
   let quitting = false;
+  let trayAvailable = true;
   const show = (hidden = false): void => {
     if (window && !window.isDestroyed()) {
       if (window.isMinimized()) window.restore();
@@ -78,7 +79,7 @@ export function installControlWindow(origin: string, icon: string, token: string
       }
       if (!quitting) {
         event.preventDefault();
-        if (store.get().closeToTray) current.hide();
+        if (store.get().closeToTray && trayAvailable) current.hide();
         else app.quit();
       }
     });
@@ -87,12 +88,35 @@ export function installControlWindow(origin: string, icon: string, token: string
     });
     void current.loadURL(origin + '/#token=' + token).catch(() => console.error('[dsh-pet-app] 控制中心加载失败'));
   };
-  Menu.setApplicationMenu(null);
+  Menu.setApplicationMenu(
+    process.platform === 'darwin'
+      ? Menu.buildFromTemplate([
+          {
+            label: 'DSH Pet',
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+          { role: 'editMenu' },
+          { role: 'windowMenu' },
+        ])
+      : null,
+  );
   app.on('before-quit', () => {
     quitting = true;
   });
   app.on('second-instance', () => show());
   app.on('activate', () => show());
   app.on('dsh-pet:open-control', () => show());
+  app.on('dsh-pet:tray-unavailable', () => {
+    trayAvailable = false;
+    show();
+  });
   show(store.get().startHidden || process.argv.includes('--hidden'));
 }

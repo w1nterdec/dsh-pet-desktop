@@ -51,3 +51,11 @@ dsh-pet/dist-app/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Android machine-local SDK settings and generated output
+android/.gradle/
+android/local.properties
+android/**/build/
+android/captures/
+*.jks
+*.keystore

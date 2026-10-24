@@ -29,6 +29,7 @@ files:
   - assets/config.jsonc
   - assets/logo.png
   - package.json
+  - LICENSE
   - '!node_modules/**'
 
 asar: true
@@ -54,3 +55,29 @@ nsis:
   createStartMenuShortcut: true
   shortcutName: DSH Pet
   artifactName: DSH-Pet-Setup-${version}-${arch}.${ext}
+
+mac:
+  category: public.app-category.entertainment
+  target:
+    - dmg
+    - zip
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  artifactName: DSH-Pet-${version}-macOS-${arch}.${ext}
+
+linux:
+  category: Game
+  icon: assets/logo.png
+  executableName: dsh-pet
+  synopsis: A local desktop companion
+  target:
+    - AppImage
+    - deb
+  artifactName: DSH-Pet-${version}-Linux-${arch}.${ext}
+  desktop:
+    entry:
+      StartupWMClass: dsh-pet
+      Keywords: pet;companion;
+
+deb:
+  maintainer: dsh-pet contributors <noreply@github.com>

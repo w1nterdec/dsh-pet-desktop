@@ -4,7 +4,7 @@
 
 基于 [PC2005-cloud/dsh-pet](https://github.com/PC2005-cloud/dsh-pet) 开发，保留原项目的动画运行时与 MIT 许可。**安装桌面版即可使用，不需要 DeepSeek Harness、Node.js 或浏览器。**
 
-[下载 Windows 安装包](https://github.com/w1nterdec/dsh-pet-desktop/releases/latest) · [使用说明](#使用) · [从源码运行](#从源码运行) · [原插件文档](docs/upstream-plugin.md)
+[跨平台构建](docs/cross-platform.md) · [导入其他桌宠](docs/pet-packs.md) · [Android 预览版](android/README.md) · [下载 Windows 安装包](https://github.com/w1nterdec/dsh-pet-desktop/releases/latest) · [使用说明](#使用) · [从源码运行](#从源码运行) · [原插件文档](docs/upstream-plugin.md)
 
 ![桌宠之家控制中心](docs/images/control-center.png)
 
@@ -17,13 +17,15 @@
 - **应用偏好**：浅色 / 深色 / 跟随系统、开机启动、启动时收起控制中心、关闭窗口后继续陪伴或退出应用。
 - **数据管理**：原生文件选择器导入导出桌宠配置；导入需确认，并在替换前备份现有配置；备份不包含 AI 密钥。
 - **运行维护**：记住窗口尺寸与位置，单实例运行，托盘唤回，打开数据目录与日志、复制诊断信息、重启和退出。
-- **发行交付**：Windows x64 安装向导、桌面与开始菜单快捷方式、卸载入口，以及自动构建工作流。
+- **素材导入**：ZIP / WebM / GIF / 图片 / 视频 / PNG 序列，以及 Shimeji 外观适配；导入校验、失败回滚、显示隐藏和配置归档。非 WebM 格式在桌面端需要 FFmpeg。
+- **跨平台开发**：macOS Intel / Apple Silicon 的 DMG/ZIP、Linux AppImage/Debian 构建入口，Linux XDG 自启动与 Wayland 能力提示；原生 Android 悬浮桌宠预览版。
+- **发行交付**：Windows x64 安装向导、快捷方式、卸载入口，以及桌面多平台和 Android 的构建工作流。
 
 ![深色应用设置](docs/images/app-settings-dark.png)
 
 ## 安装
 
-在 [Releases](https://github.com/w1nterdec/dsh-pet-desktop/releases/latest) 下载 `DSH-Pet-Setup-0.4.1-x64.exe`，运行安装向导即可。发行版本目前针对 **Windows 10/11 x64** 验证；macOS / Linux 的上游运行逻辑仍保留，本项目尚未提供这两个平台的安装包。
+在 [Releases](https://github.com/w1nterdec/dsh-pet-desktop/releases/latest) 下载 `DSH-Pet-Setup-0.4.1-x64.exe`，运行安装向导即可。已发布版本针对 **Windows 10/11 x64** 验证。本次开发增加 macOS / Linux 原生打包与 CI、Android 原生预览版；macOS / Linux 仍需在对应平台执行构建与交互测试，不能将构建配置视为已经发布或验证的安装包。详见 [跨平台说明](docs/cross-platform.md)。
 
 安装包暂未进行代码签名。无需管理员权限；默认安装到当前用户目录。
 
@@ -35,7 +37,7 @@
 4. 右键桌宠选择动作、对话或碎碎念。自动碎碎念可能产生 API 费用，默认关闭。
 5. 默认关闭控制中心只会收起窗口，桌宠继续运行。点击托盘图标可唤回；托盘菜单或面板中的「退出应用」会结束整个应用。
 
-开机启动仅在打包后的 Windows / macOS 应用中可配置。开机登录时会收起面板；「启动时收起控制中心」也可控制普通启动行为。关闭开机启动会移除本应用对应的启动项。
+开机启动在打包后的 Windows / macOS / Linux 应用中可配置，Linux 遵循 XDG Autostart。开机登录时会收起面板；「启动时收起控制中心」也可控制普通启动行为。关闭开机启动会移除本应用对应的启动项。
 
 ### 数据与隐私
 
@@ -49,7 +51,7 @@
 
 ### 边界
 
-独立桌面应用不提供 DSH 的余额查询、会话工作状态或 DSH 系统通知。额外 pet pack 和自定义动画沿用原项目文件结构；控制中心目前管理主配置中的内置桌宠，召回同样只作用于这部分桌宠。
+独立桌面应用不提供 DSH 的余额查询、会话工作状态或 DSH 系统通知。额外 pet pack 和自定义动画沿用原项目文件结构。控制中心可导入素材包并管理显示/隐藏/移除；召回和主配置编辑仍作用于内置桌宠。Android 当前提供本地动画陪伴，尚未接入桌面 AI；Live2D/VRM 模型与原 Shimeji Java 行为需要单独的运行时适配。
 
 ## 从源码运行
 

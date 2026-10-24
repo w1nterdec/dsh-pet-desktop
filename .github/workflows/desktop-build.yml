@@ -1,12 +1,12 @@
-name: Desktop app checks and Windows installer
+name: Desktop app checks and native packages
 
 on:
   workflow_dispatch:
   pull_request:
-    paths: ['dsh-pet/**', '.github/workflows/desktop-build.yml']
+    paths: ["dsh-pet/**", ".github/workflows/desktop-build.yml"]
   push:
     branches: [main, desktop-app]
-    paths: ['dsh-pet/**', '.github/workflows/desktop-build.yml']
+    paths: ["dsh-pet/**", ".github/workflows/desktop-build.yml"]
 
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
       - uses: pnpm/action-setup@v4
         with:
           version: 12
@@ -31,10 +31,11 @@ jobs:
       - run: pnpm run typecheck
       - run: pnpm run lint
       - run: pnpm test
+      - run: pnpm run test:platform
       - name: Build Windows installer
         run: pnpm run dist:installer
         env:
-          DSH_PET_ALLOW_ELECTRON_DOWNLOAD: '1'
+          DSH_PET_ALLOW_ELECTRON_DOWNLOAD: "1"
       - name: Verify packaged app in an isolated home
         run: pnpm run test:app
         env:
@@ -43,4 +44,80 @@ jobs:
         with:
           name: DSH-Pet-Windows-x64
           path: dsh-pet/dist-app/DSH-Pet-Setup-*.exe
+          if-no-files-found: error
+
+  unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            arch: arm64
+            target: dmg
+            executable: mac-arm64/DSH Pet.app/Contents/MacOS/DSH Pet
+          - os: macos-15-intel
+            arch: x64
+            target: dmg
+            executable: mac/DSH Pet.app/Contents/MacOS/DSH Pet
+          - os: ubuntu-24.04
+            arch: x64
+            target: AppImage
+            executable: linux-unpacked/dsh-pet
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: dsh-pet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm test
+      - run: node --test scripts/tests/dist-options.test.mjs
+      - name: Install Linux GUI libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64 libgbm1 libnotify4 libsecret-1-0 libfuse2t64 ffmpeg
+      - name: Verify real media conversion
+        if: runner.os == 'Linux'
+        run: pnpm run test:media
+        env:
+          DSH_PET_FFMPEG_PATH: /usr/bin/ffmpeg
+      - name: Build native package
+        run: node scripts/dist.mjs '${{ matrix.target }}'
+        env:
+          DSH_PET_ALLOW_ELECTRON_DOWNLOAD: "1"
+          DSH_PET_TARGET_ARCH: ${{ matrix.arch }}
+          ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
+          ELECTRON_BUILDER_BINARIES_MIRROR: https://github.com/electron-userland/electron-builder-binaries/releases/download/
+      - name: Test packaged app on macOS
+        if: runner.os == 'macOS'
+        run: pnpm run test:app
+        env:
+          DSH_PET_APP_EXECUTABLE: ${{ github.workspace }}/dsh-pet/dist-app/${{ matrix.executable }}
+      - name: Test packaged app on Linux X11
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm run test:app
+        env:
+          DSH_PET_APP_EXECUTABLE: ${{ github.workspace }}/dsh-pet/dist-app/${{ matrix.executable }}
+          DSH_PET_TEST_NO_SANDBOX: "1"
+      - name: Build Debian package
+        if: runner.os == 'Linux'
+        run: node scripts/dist.mjs deb
+        env:
+          DSH_PET_ALLOW_ELECTRON_DOWNLOAD: "1"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DSH-Pet-${{ runner.os }}-${{ matrix.arch }}
+          path: |
+            dsh-pet/dist-app/*.dmg
+            dsh-pet/dist-app/*.AppImage
+            dsh-pet/dist-app/*.deb
           if-no-files-found: error
