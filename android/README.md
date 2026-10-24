@@ -2,6 +2,12 @@
 
 Android 9/API 28 起可用，使用原生界面和悬浮窗。内置「蓝毛小女仆」的 **106 个动作**，复用仓库已有 GIF 素材并保留 MIT 许可。首次安装不需要额外下载动作资源。
 
+## 下载
+
+当前版本 **0.2.0-beta.1**。打开 [已通过验收的构建](https://github.com/w1nterdec/dsh-pet-desktop/actions/runs/40108238030)，登录 GitHub，在页面底部 **Artifacts** 下载 `DSH-Pet-Android-preview`，解压后安装 `app-debug.apk`。后续版本见 [Android 工作流](https://github.com/w1nterdec/dsh-pet-desktop/actions/workflows/android-build.yml)。
+
+完整资源 APK 约 **71 MiB**，包含 106 个动作。该构建的 13 项单元测试、Lint、Android 9/15 各 5 项设备测试和截图采集均通过，详细范围见 [验证记录](../docs/validation-2026-10-24.md)。
+
 ## 已实现
 
 - 伙伴 / 动作 / 设置三个页面，浅色、深色和跟随系统主题。
