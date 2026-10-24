@@ -41,6 +41,11 @@ jobs:
         env:
           DSH_PET_APP_EXECUTABLE: ${{ github.workspace }}\dsh-pet\dist-app\win-unpacked\DSH Pet.exe
       - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Desktop-QA-Windows-x64
+          path: .tools/qa/*.png
+      - uses: actions/upload-artifact@v4
         with:
           name: DSH-Pet-Windows-x64
           path: dsh-pet/dist-app/DSH-Pet-Setup-*.exe
@@ -113,6 +118,11 @@ jobs:
         run: node scripts/dist.mjs deb
         env:
           DSH_PET_ALLOW_ELECTRON_DOWNLOAD: "1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Desktop-QA-${{ runner.os }}-${{ matrix.arch }}
+          path: .tools/qa/*.png
       - uses: actions/upload-artifact@v4
         with:
           name: DSH-Pet-${{ runner.os }}-${{ matrix.arch }}

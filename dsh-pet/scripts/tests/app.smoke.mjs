@@ -56,6 +56,14 @@ const application = await _electron.launch({
   env,
   timeout: 60000,
 });
+application.context().setDefaultTimeout(30000);
+application.context().setDefaultNavigationTimeout(30000);
+const watchdog = setTimeout(() => {
+  console.error('Native smoke test exceeded 180 seconds; terminating the isolated Electron process.');
+  application.process().kill('SIGKILL');
+  process.exitCode = 1;
+}, 180000);
+watchdog.unref();
 try {
   const control = await application
     .waitForEvent('window', { predicate: (page) => page.url().startsWith('http:'), timeout: 30000 })
@@ -66,6 +74,7 @@ try {
   assert.equal(await control.locator('.pet').count(), 1);
   await control.waitForFunction(() => document.getElementById('hero-pet').readyState >= 2);
   await control.screenshot({ path: join(output, 'control-center.png'), fullPage: true });
+  console.log('[smoke] native control centre and preview ready');
 
   // Both native settings requests and delegated plugin writes must be authenticated.
   await control.getByRole('link', { name: 'AI 与对话' }).click();
@@ -73,6 +82,7 @@ try {
   assert.equal(await control.getByLabel('启用 AI 对话').isChecked(), false);
   await control.screenshot({ path: join(output, 'ai-settings.png'), fullPage: true });
   await control.getByRole('link', { name: '返回我的桌宠' }).click();
+  console.log('[smoke] AI settings opened and returned');
   await control.waitForFunction(() => !document.getElementById('save').disabled);
   await control.getByLabel('大小 · px', { exact: true }).fill('320');
   await control.getByRole('button', { name: '保存更改' }).click();
@@ -95,6 +105,7 @@ try {
     timeout: 30000,
   });
   await pet.screenshot({ path: join(output, 'pet-window.png') });
+  console.log('[smoke] multiple pet windows and video decode ready');
 
   await control.locator('.remove').last().click();
   await control.locator('#confirm-yes').click();
@@ -127,6 +138,7 @@ try {
   await control.getByRole('button', { name: '我的桌宠', exact: false }).click();
   await control.getByRole('button', { name: '召回桌宠', exact: false }).click();
   await control.waitForFunction(() => document.getElementById('toast').textContent.includes('已回到'));
+  console.log('[smoke] preferences, theme persistence and recall ready');
 
   // Native file dialogs are replaced only inside this isolated test process.
   const importFile = join(root, 'assets/webm/待机呼吸休闲.webm');
@@ -149,6 +161,7 @@ try {
   });
   await control.locator('#imported-pets').getByRole('button', { name: '移除', exact: true }).click();
   await control.waitForFunction(() => !document.getElementById('imported-pets').children.length);
+  console.log('[smoke] native import, show/hide and removal ready');
 
   const nativeCount = await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length);
   await application.evaluate(({ BrowserWindow }) =>
@@ -178,6 +191,7 @@ try {
     'PASS: native window, AI settings auth, save, add/remove, video decode, pet import/toggle/remove, hide and tray recovery',
   );
 } finally {
-  await application.close();
+  await application.close().catch(() => {});
+  clearTimeout(watchdog);
   await rm(home, { recursive: true, force: true });
 }
