@@ -75,7 +75,7 @@ jobs:
           target: default
           disable-animations: true
           script: |
-            bash android/gradlew -p android --no-daemon connectedDebugAndroidTest
+            bash android/gradlew -p android --no-daemon -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true connectedDebugAndroidTest
             adb pull /sdcard/Android/data/com.dshpet.android/files/qa android/device-screenshots
       - uses: actions/upload-artifact@v4
         if: always()
