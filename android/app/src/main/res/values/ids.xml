@@ -1,0 +1,6 @@
+<resources>
+    <item name="main_content" type="id"/><item name="nav_pets" type="id"/><item name="nav_actions" type="id"/>
+    <item name="nav_settings" type="id"/><item name="add_builtin" type="id"/><item name="pet_list" type="id"/>
+    <item name="chat_input" type="id"/><item name="chat_send" type="id"/><item name="chat_stop" type="id"/><item name="chat_history" type="id"/>
+    <item name="ai_base" type="id"/><item name="ai_model" type="id"/><item name="ai_key" type="id"/><item name="ai_save" type="id"/>
+</resources>

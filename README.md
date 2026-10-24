@@ -18,7 +18,7 @@
 - **数据管理**：原生文件选择器导入导出桌宠配置；导入需确认，并在替换前备份现有配置；备份不包含 AI 密钥。
 - **运行维护**：记住窗口尺寸与位置，单实例运行，托盘唤回，打开数据目录与日志、复制诊断信息、重启和退出。
 - **素材导入**：ZIP / WebM / GIF / 图片 / 视频 / PNG 序列，以及 Shimeji 外观适配；导入校验、失败回滚、显示隐藏和配置归档。非 WebM 格式在桌面端需要 FFmpeg。
-- **跨平台开发**：macOS Intel / Apple Silicon 的 DMG/ZIP、Linux AppImage/Debian 构建入口，Linux XDG 自启动与 Wayland 能力提示；原生 Android 悬浮桌宠预览版。
+- **跨平台开发**：macOS Intel / Apple Silicon 的 DMG/ZIP、Linux AppImage/Debian 构建入口，Linux XDG 自启动与 Wayland 能力提示；Android 内置 106 个动作、多宠物悬浮窗、物理交互、可选 AI 聊天与加密记忆。
 - **发行交付**：Windows x64 安装向导、快捷方式、卸载入口，以及桌面多平台和 Android 的构建工作流。
 
 ![深色应用设置](docs/images/app-settings-dark.png)
@@ -55,7 +55,7 @@
 
 ### 边界
 
-独立桌面应用不提供 DSH 的余额查询、会话工作状态或 DSH 系统通知。额外 pet pack 和自定义动画沿用原项目文件结构。控制中心可导入素材包并管理显示/隐藏/移除；召回和主配置编辑仍作用于内置桌宠。Android 当前提供本地动画陪伴，尚未接入桌面 AI；Live2D/VRM 模型与原 Shimeji Java 行为需要单独的运行时适配。
+独立桌面应用不提供 DSH 的余额查询、会话工作状态或 DSH 系统通知。额外 pet pack 和自定义动画沿用原项目文件结构。控制中心可导入素材包并管理显示/隐藏/移除；召回和主配置编辑仍作用于内置桌宠。Android 0.2 提供原生 AI 聊天、独立人设和本机加密记忆，可导入/导出图片动作包及精灵图；Android 与桌面数据分别保存。Live2D/VRM 模型与原 Shimeji Java 行为需要专用运行时适配。
 
 ## 从源码运行
 

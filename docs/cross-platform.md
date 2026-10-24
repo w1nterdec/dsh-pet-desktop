@@ -44,9 +44,11 @@ macOS 应在 macOS 上打包 DMG；Linux 应在 Linux 上构建 Debian/AppImage�
 
 ## Android
 
-见 [Android 说明](../android/README.md)。支持 Android 9/API 28 起的 GIF、动态 WebP、静态图片、PNG 序列与动作包；视频和 Live2D/VRM 不在当前 Android 播放器的格式范围内。
+见 [Android 说明](../android/README.md)。0.2 版内置 106 个动作，支持 Android 9/API 28 起的 GIF、动态 WebP、静态图片、PNG 序列、精灵图与动作包；最多保存 12 只伙伴，同时显示 4 只，保留多份导入素材并支持导出。视频和 Live2D/VRM 不在当前 Android 播放器的格式范围内。
 
-原生版本采用用户手动启动的前台服务、明确的常驻通知和停止入口；不会监听开机广播，也不请求无障碍、全盘存储或网络权限。素材与设置与桌面版分别存储，不自动同步，暂未接入桌面端 AI 对话。
+原生版本采用用户手动启动的前台服务、常驻通知和停止入口，提供拖拽抛掷、重力反弹、可选碰撞及省电模式；不监听开机广播，不请求无障碍或全盘存储。可选 AI 支持 Chat Completions、Responses 和 Anthropic 文本流，密钥和独立聊天记忆由 Android Keystore 加密；网络权限用于 AI。AI 和自动问候默认关闭，素材、设置和记忆不与桌面版自动同步。
+
+本机 Android 15 专用模拟器已覆盖双悬浮窗、完整动作界面、独立配置与历史、精灵图导入导出和 Keystore 保护。CI 增加 Android 9/15 模拟器任务，结果以具体运行报告为准；模拟器通过仍不能替代厂商手机的后台和耗电验收。
 
 ## 验证入口
 

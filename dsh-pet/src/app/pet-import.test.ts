@@ -8,6 +8,35 @@ import { readAllConfig } from '../host/config.ts';
 
 const webm = Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x80]);
 
+test('sprite sheets resolve nested files and reject conflicting or unbounded grids', () => {
+  const sheet = { file: 'atlas.png', frameWidth: 32, frameHeight: 32, columns: 2, count: 2, fps: 12 };
+  const clip = { name: 'stand', role: 'idle', sheet };
+  const plan = (animation: object) =>
+    planPetImport(
+      new Map([
+        [
+          'fox/pet.json',
+          Buffer.from(JSON.stringify({ format: 'dsh-pet/pack-v1', name: '狐狸', animations: [animation] })),
+        ],
+        ['fox/atlas.png', Buffer.from('fixture')],
+        ['fox/atlas.gif', Buffer.from('fixture')],
+      ]),
+      'fallback',
+    );
+  assert.deepEqual(plan(clip).clips[0].sheet, { ...sheet, file: 'fox/atlas.png' });
+  assert.equal(plan(clip).clips[0].role, 'idle');
+  assert.throws(() => plan({ ...clip, file: 'atlas.png' }), /只能/);
+  for (const [key, value] of [
+    ['count', 301],
+    ['fps', 0],
+    ['columns', 1.5],
+    ['frameWidth', 0],
+  ]) {
+    assert.throws(() => plan({ ...clip, sheet: { ...sheet, [key]: value } }), /无效/);
+  }
+  assert.throws(() => plan({ ...clip, sheet: { ...sheet, file: 'atlas.gif' } }), /PNG/);
+});
+
 test('portable manifest resolves nested clips and ordered PNG frames without evaluating behavior', () => {
   const files = new Map([
     [

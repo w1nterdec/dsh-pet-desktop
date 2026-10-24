@@ -1,5 +1,7 @@
 plugins { id 'com.android.application' }
 
+def builtinAssets = layout.buildDirectory.dir('generated/builtin-assets')
+
 android {
     namespace 'com.dshpet.android'
     compileSdk 36
@@ -7,8 +9,9 @@ android {
         applicationId 'com.dshpet.android'
         minSdk 28
         targetSdk 36
-        versionCode 1
-        versionName '0.1.0-preview.1'
+        versionCode 2
+        versionName '0.2.0-beta.1'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -17,6 +20,35 @@ android {
     buildTypes {
         release { minifyEnabled false }
     }
+    androidResources { noCompress += ['gif', 'webp'] }
+    sourceSets.main.assets.srcDir(builtinAssets)
 }
 
-dependencies { testImplementation 'junit:junit:4.13.2' }
+// Reuse the existing licensed library without storing a second copy in Git.
+def syncBuiltinAnimations = tasks.register('syncBuiltinAnimations', Sync) {
+    inputs.file('src/main/assets/builtin/pet.json')
+    from(rootProject.file('../dsh-pet/assets/preview')) {
+        include '*.gif'
+        into 'builtin'
+    }
+    into builtinAssets
+    doLast {
+        def manifest = new groovy.json.JsonSlurper().parse(file('src/main/assets/builtin/pet.json'))
+        manifest.animations.each { clip ->
+            if (!new File(builtinAssets.get().asFile, 'builtin/' + clip.file).isFile()) {
+                throw new GradleException('Missing builtin animation: ' + clip.file)
+            }
+        }
+    }
+}
+tasks.named('preBuild').configure { dependsOn syncBuiltinAnimations }
+
+dependencies {
+    implementation 'androidx.core:core:1.16.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20260814'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+}

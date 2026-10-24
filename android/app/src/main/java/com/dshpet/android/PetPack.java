@@ -33,6 +33,7 @@ public final class PetPack {
     }
     if (!id.equals("builtin") && !id.matches("pet-[a-f0-9-]{36}")) return null;
     try {
+      if (id.equals("builtin")) return builtin(context);
       File directory = new File(context.getFilesDir(), "pets/" + id);
       return new PetPack(
           directory, new JSONObject(readText(new File(directory, "installed.json"))));
@@ -41,35 +42,85 @@ public final class PetPack {
     }
   }
 
-  public static PetPack useBuiltin(Context context) throws Exception {
-    File directory = new File(context.getFilesDir(), "pets/builtin");
-    if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("无法创建内置桌宠目录");
-    File animation = new File(directory, "companion.gif");
-    if (!animation.isFile()) {
-      File temporary = new File(directory, "companion.tmp");
-      try (InputStream input = context.getAssets().open("default/companion.gif")) {
-        copy(input, temporary, MAX_FILE);
-      }
-      if (!temporary.renameTo(animation)) throw new IOException("无法初始化内置桌宠");
-    }
-    JSONObject manifest =
-        new JSONObject()
-            .put("name", "鲸鲸")
-            .put(
-                "animations",
-                new JSONArray()
-                    .put(new JSONObject().put("name", "idle").put("file", "companion.gif")));
-    try (Writer writer =
-        new OutputStreamWriter(
-            new FileOutputStream(new File(directory, "installed.json")),
-            java.nio.charset.StandardCharsets.UTF_8)) {
-      writer.write(manifest.toString());
-    }
-    context.getSharedPreferences("pet", 0).edit().putString("selected", "builtin").apply();
-    return new PetPack(directory, manifest);
+  public static PetPack load(Context context, String id) throws Exception {
+    if (!PetProfile.validPack(id)) throw new IOException("素材包编号无效");
+    if ("builtin".equals(id)) return builtin(context);
+    File directory = new File(context.getFilesDir(), "pets/" + id);
+    return new PetPack(
+        directory, JsonFiles.read(new File(directory, "installed.json"), 128 * 1024));
   }
 
-  public static PetPack install(Context context, Uri uri) throws Exception {
+  private static PetPack builtin(Context context) throws Exception {
+    File directory = new File(context.getFilesDir(), "pets/builtin");
+    if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("无法创建素材目录");
+    try (InputStream input = context.getAssets().open("builtin/pet.json")) {
+      return new PetPack(
+          directory,
+          new JSONObject(
+              new String(
+                  JsonFiles.read(input, 128 * 1024), java.nio.charset.StandardCharsets.UTF_8)));
+    }
+  }
+
+  public static PetPack useBuiltin(Context context) throws Exception {
+    PetPack pack = builtin(context);
+    context.getSharedPreferences("pet", 0).edit().putString("selected", "builtin").apply();
+    return pack;
+  }
+
+  public InputStream open(Context context, String path) throws IOException {
+    PackPaths.safe(path);
+    return directory.getName().equals("builtin")
+        ? context.getAssets().open("builtin/" + path)
+        : new FileInputStream(new File(directory, path));
+  }
+
+  public android.graphics.ImageDecoder.Source imageSource(Context context, String path)
+      throws IOException {
+    PackPaths.safe(path);
+    return directory.getName().equals("builtin")
+        ? android.graphics.ImageDecoder.createSource(context.getAssets(), "builtin/" + path)
+        : android.graphics.ImageDecoder.createSource(new File(directory, path));
+  }
+
+  public void export(Context context, OutputStream target, String displayName) throws Exception {
+    JSONObject manifest =
+        new JSONObject()
+            .put("format", "dsh-pet/pack-v1")
+            .put("name", displayName)
+            .put("animations", animations);
+    Set<String> paths = new LinkedHashSet<>();
+    for (int i = 0; i < animations.length(); i++) {
+      JSONObject clip = animations.getJSONObject(i);
+      if (clip.has("file")) paths.add(clip.getString("file"));
+      else if (clip.has("sheet")) paths.add(clip.getJSONObject("sheet").getString("file"));
+      else {
+        JSONArray frames = clip.getJSONArray("frames");
+        for (int f = 0; f < frames.length(); f++) paths.add(frames.getString(f));
+      }
+    }
+    try (java.util.zip.ZipOutputStream zip = new java.util.zip.ZipOutputStream(target)) {
+      zip.putNextEntry(new ZipEntry("pet.json"));
+      zip.write(manifest.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      zip.closeEntry();
+      byte[] buffer = new byte[16384];
+      long total = 0;
+      for (String path : paths) {
+        zip.putNextEntry(new ZipEntry(PackPaths.safe(path)));
+        try (InputStream input = open(context, path)) {
+          int count;
+          while ((count = input.read(buffer)) != -1) {
+            total += count;
+            if (total > MAX_TOTAL) throw new IOException("素材包过大");
+            zip.write(buffer, 0, count);
+          }
+        }
+        zip.closeEntry();
+      }
+    }
+  }
+
+  public static synchronized PetPack install(Context context, Uri uri) throws Exception {
     File parent = new File(context.getFilesDir(), "pets");
     if (!parent.isDirectory() && !parent.mkdirs()) throw new IOException("无法创建素材目录");
     File stage = new File(parent, ".import-" + UUID.randomUUID());
@@ -140,13 +191,6 @@ public final class PetPack {
           .edit()
           .putString("selected", destination.getName())
           .apply();
-      // Keep only the selected pack; the overlay service is stopped by the caller before replacing
-      // it.
-      File[] old = parent.listFiles();
-      if (old != null)
-        for (File file : old)
-          if (file.isDirectory() && file.getName().startsWith("pet-") && !file.equals(destination))
-            delete(file);
       return new PetPack(destination, manifest);
     } finally {
       if (!committed) delete(stage);
@@ -171,7 +215,7 @@ public final class PetPack {
       if (name.trim().isEmpty()
           || name.length() > 80
           || animations.length() < 1
-          || animations.length() > 64) throw new IOException("动作包名称或动作数量无效");
+          || animations.length() > 128) throw new IOException("动作包名称或动作数量无效");
       String prefix =
           manifestPath.contains("/")
               ? manifestPath.substring(0, manifestPath.lastIndexOf('/') + 1)
@@ -183,12 +227,58 @@ public final class PetPack {
         if (!clipName.matches("[\\p{L}\\p{N}_-]{1,60}") || !clipNames.add(PackPaths.key(clipName)))
           throw new IOException("动作名称无效或重复");
         JSONObject clip = new JSONObject().put("name", clipName);
+        if (source.has("label") && !(source.get("label") instanceof String))
+          throw new IOException("动作显示名须为文字");
+        String label = source.optString("label", clipName);
+        if (label.length() > 80) throw new IOException("动作显示名过长");
+        String role = source.optString("role", "action");
+        if (!Arrays.asList("idle", "click", "drag", "move", "action").contains(role))
+          role = "action";
+        clip.put("label", label)
+            .put("role", role)
+            .put("noMirror", source.optBoolean("noMirror", true));
+        if (source.has("sheet")) {
+          if (source.has("frames") || source.has("file")) throw new IOException("动作只能选择一种素材来源");
+          JSONObject rawSheet = source.getJSONObject("sheet");
+          String path = requireImage(files, prefix, rawSheet.getString("file"));
+          if (!path.toLowerCase(Locale.ROOT).matches(".*\\.(png|webp|jpe?g)$"))
+            throw new IOException("精灵图须为 PNG、WebP 或 JPEG");
+          int width = integer(rawSheet, "frameWidth", 1, 2048),
+              height = integer(rawSheet, "frameHeight", 1, 2048);
+          int columns = integer(rawSheet, "columns", 1, 64),
+              count = integer(rawSheet, "count", 1, 300),
+              fps = integer(rawSheet, "fps", 1, 30);
+          android.graphics.BitmapFactory.Options bounds =
+              new android.graphics.BitmapFactory.Options();
+          bounds.inJustDecodeBounds = true;
+          android.graphics.BitmapFactory.decodeFile(files.get(path).getPath(), bounds);
+          if (bounds.outWidth <= 0
+              || bounds.outHeight <= 0
+              || bounds.outWidth > 4096
+              || bounds.outHeight > 4096
+              || (long) bounds.outWidth * bounds.outHeight > 8388608
+              || (long) width * columns > bounds.outWidth
+              || (long) height * ((count + columns - 1) / columns) > bounds.outHeight)
+            throw new IOException("精灵图尺寸或帧网格无效");
+          clip.put(
+              "sheet",
+              new JSONObject()
+                  .put("file", path)
+                  .put("frameWidth", width)
+                  .put("frameHeight", height)
+                  .put("columns", columns)
+                  .put("count", count)
+                  .put("fps", fps));
+          clips.put(clip);
+          continue;
+        }
         if (source.has("frames")) {
           JSONArray frames = source.getJSONArray("frames"), normalized = new JSONArray();
           Object rawFps = source.get("fps");
           if (!(rawFps instanceof Number)
-              || ((Number) rawFps).doubleValue() != Math.rint(((Number) rawFps).doubleValue()))
-            throw new IOException("帧率须为 1～30 的整数");
+              || (((Number) rawFps).doubleValue() != Math.rint(((Number) rawFps).doubleValue())
+                  || ((Number) rawFps).doubleValue() < 1
+                  || ((Number) rawFps).doubleValue() > 30)) throw new IOException("帧率须为 1～30 的整数");
           int fps = ((Number) rawFps).intValue();
           if (source.has("file")
               || frames.length() < 1
@@ -236,7 +326,7 @@ public final class PetPack {
                 .put("frames", new JSONArray(shimeji))
                 .put("fps", 12));
       } else {
-        if (images.size() > 64) throw new IOException("请使用 pet.json 定义 PNG 序列，最多 64 个动作");
+        if (images.size() > 128) throw new IOException("请使用 pet.json 定义 PNG 序列，最多 128 个动作");
         for (String image : images)
           clips.put(new JSONObject().put("name", "action-" + clips.length()).put("file", image));
       }
@@ -245,6 +335,7 @@ public final class PetPack {
     Set<String> referenced = new HashSet<>();
     for (int i = 0; i < clips.length(); i++) {
       JSONObject clip = clips.getJSONObject(i);
+      if (clip.has("sheet")) continue;
       if (clip.has("file")) referenced.add(clip.getString("file"));
       else {
         JSONArray frames = clip.getJSONArray("frames");
@@ -261,6 +352,15 @@ public final class PetPack {
           || bounds.outHeight > 2048) throw new IOException("图片无法解码或尺寸超过 2048 像素");
     }
     return new JSONObject().put("name", name).put("animations", clips);
+  }
+
+  private static int integer(JSONObject json, String key, int min, int max) throws Exception {
+    Object value = json.get(key);
+    if (!(value instanceof Number)) throw new IOException("精灵图参数须为整数");
+    double number = ((Number) value).doubleValue();
+    if (!Double.isFinite(number) || number != Math.rint(number) || number < min || number > max)
+      throw new IOException("精灵图参数超出范围");
+    return (int) number;
   }
 
   private static String requireImage(Map<String, File> files, String prefix, String value)

@@ -1,0 +1,748 @@
+{
+  "format": "dsh-pet/pack-v1",
+  "name": "蓝毛小女仆",
+  "animations": [
+    {
+      "name": "clip-032",
+      "label": "待机呼吸休闲",
+      "role": "idle",
+      "file": "daiji-huxi-xiuxian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-001",
+      "label": "被落叶淹没",
+      "role": "action",
+      "file": "beiluoye-yanmo.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-002",
+      "label": "被鼠标拖拽悬空反馈",
+      "role": "drag",
+      "file": "beishubiao-tuozhuai-xuankong-fankui.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-003",
+      "label": "被吓一跳",
+      "role": "action",
+      "file": "beixiayitiao-zhamao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-004",
+      "label": "变鸽子",
+      "role": "action",
+      "file": "bian-gezi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-005",
+      "label": "插茱萸赏菊",
+      "role": "action",
+      "file": "cha-zhuyu-shangju.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-006",
+      "label": "拆礼物",
+      "role": "action",
+      "file": "chai-liwu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-007",
+      "label": "超大伸懒腰",
+      "role": "action",
+      "file": "chaoda-shenlanyao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-008",
+      "label": "晨间刷牙",
+      "role": "action",
+      "file": "chenjian-shuaya.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-009",
+      "label": "吃白饭",
+      "role": "action",
+      "file": "chi-baifan.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-010",
+      "label": "吃冰淇淋融化",
+      "role": "action",
+      "file": "chi-bingqilin-ronghua.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-011",
+      "label": "吃长寿面",
+      "role": "action",
+      "file": "chi-changshoumian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-012",
+      "label": "吃重阳糕",
+      "role": "action",
+      "file": "chi-chongyanggao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-013",
+      "label": "吃大闸蟹",
+      "role": "action",
+      "file": "chi-dazhaxie.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-014",
+      "label": "吃腊八粥",
+      "role": "action",
+      "file": "chi-labazhou.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-015",
+      "label": "吃年糕",
+      "role": "action",
+      "file": "chi-niangao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-016",
+      "label": "吃青团",
+      "role": "action",
+      "file": "chi-qingtuan.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-017",
+      "label": "吃糖葫芦",
+      "role": "action",
+      "file": "chi-tanghulu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-018",
+      "label": "吃Token",
+      "role": "action",
+      "file": "chi-token.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-019",
+      "label": "吃晚餐",
+      "role": "action",
+      "file": "chi-wancan.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-020",
+      "label": "吃午餐",
+      "role": "action",
+      "file": "chi-wucan.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-021",
+      "label": "吃西瓜",
+      "role": "action",
+      "file": "chi-xigua.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-022",
+      "label": "吃早餐",
+      "role": "action",
+      "file": "chi-zaocan.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-023",
+      "label": "吃粽子",
+      "role": "action",
+      "file": "chi-zongzi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-024",
+      "label": "吃饺子",
+      "role": "action",
+      "file": "chijiaozi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-025",
+      "label": "吃汤圆",
+      "role": "action",
+      "file": "chitangyuan.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-026",
+      "label": "抽陀螺",
+      "role": "action",
+      "file": "chou-tuoluo.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-027",
+      "label": "穿针乞巧",
+      "role": "action",
+      "file": "chuanzhenqiqiao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-028",
+      "label": "吹笛子",
+      "role": "action",
+      "file": "chui-dizi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-029",
+      "label": "吹气球",
+      "role": "action",
+      "file": "chui-qiqiu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-030",
+      "label": "打瞌睡被惊醒",
+      "role": "action",
+      "file": "da-keshui-bei-jingxing.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-031",
+      "label": "余额-袋空如洗",
+      "role": "action",
+      "file": "dai-kong-ru-xi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-033",
+      "label": "大口吃零食",
+      "role": "action",
+      "file": "dakou-chi-lingshi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-034",
+      "label": "荡秋千",
+      "role": "action",
+      "file": "dangqiuqian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-035",
+      "label": "点击回应-傲娇生气",
+      "role": "click",
+      "file": "dianji-huiying-aojiao-shengqi-ceshen-zhanshi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-036",
+      "label": "点击回应-害羞惊讶",
+      "role": "click",
+      "file": "dianji-huiying-haixiu-jingya.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-037",
+      "label": "点击回应-开心跃动",
+      "role": "click",
+      "file": "dianji-huiying-kaixin-yuedong.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-038",
+      "label": "点击回应-挠痒咯咯笑",
+      "role": "click",
+      "file": "dianji-huiying-naoyang-gegexiao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-039",
+      "label": "点击回应-元气挥手",
+      "role": "click",
+      "file": "dianji-huiying-yuanqi-huishou.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-040",
+      "label": "动物环绕",
+      "role": "action",
+      "file": "dongwu-huanrao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-041",
+      "label": "东张西望",
+      "role": "action",
+      "file": "dongzhangxiwang.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-042",
+      "label": "堆雪人",
+      "role": "action",
+      "file": "duixueren.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-043",
+      "label": "放风筝",
+      "role": "action",
+      "file": "fang-fengzheng.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-044",
+      "label": "放孔明灯",
+      "role": "action",
+      "file": "fang-kongmingdeng.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-045",
+      "label": "放烟花",
+      "role": "action",
+      "file": "fang-yanhua.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-046",
+      "label": "放河灯",
+      "role": "action",
+      "file": "fanghedeng.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-047",
+      "label": "余额-分文不剩",
+      "role": "action",
+      "file": "fen-wen-bu-sheng.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-048",
+      "label": "工作状态-垂头叹气冒汗",
+      "role": "action",
+      "file": "gongzuozhuangtai-chuitou-tanqi-maohan.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-049",
+      "label": "工作状态-忙碌点按",
+      "role": "action",
+      "file": "gongzuozhuangtai-manglu-dianan.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-050",
+      "label": "工作状态-清点归档",
+      "role": "action",
+      "file": "gongzuozhuangtai-qingdian-guidang.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-051",
+      "label": "工作状态-雀跃庆祝",
+      "role": "action",
+      "file": "gongzuozhuangtai-queyue-qingzhu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-052",
+      "label": "工作状态-思考冒泡",
+      "role": "action",
+      "file": "gongzuozhuangtai-sikao-maopao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-053",
+      "label": "工作状态-原地踱步张望",
+      "role": "action",
+      "file": "gongzuozhuangtai-yuandi-duobu-zhangwang.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-054",
+      "label": "哈欠连天",
+      "role": "action",
+      "file": "haqian-liantian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-055",
+      "label": "蝴蝶蜜蜂环绕头顶开花",
+      "role": "action",
+      "file": "hudie-mifeng-huanrao-touding-kaihua.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-056",
+      "label": "余额-金袋叮当",
+      "role": "action",
+      "file": "jin-dai-ding-dang.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-057",
+      "label": "鲸鱼吐泡泡特效",
+      "role": "action",
+      "file": "jingyu-tu-paopao-texiao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-058",
+      "label": "可爱宅舞",
+      "role": "action",
+      "file": "keai-zhaiwu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-059",
+      "label": "蓝鲸现世",
+      "role": "action",
+      "file": "lanjing-xianshi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-060",
+      "label": "撸猫",
+      "role": "action",
+      "file": "lu-mao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-061",
+      "label": "萌化小幽灵",
+      "role": "action",
+      "file": "menghua-xiaoyouling.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-062",
+      "label": "女仆屈膝礼仪",
+      "role": "action",
+      "file": "nvpu-quxi-liyi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-063",
+      "label": "螃蟹走路",
+      "role": "move",
+      "file": "pangxie-zoulu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-064",
+      "label": "凭空生花",
+      "role": "action",
+      "file": "pingkong-shenghua.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-065",
+      "label": "扑克魔术",
+      "role": "action",
+      "file": "puke-moshu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-066",
+      "label": "骑木马",
+      "role": "action",
+      "file": "qi-muma.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-067",
+      "label": "余额-钱袋满溢",
+      "role": "action",
+      "file": "qian-dai-man-yi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-068",
+      "label": "余额-钱袋如常",
+      "role": "action",
+      "file": "qian-dai-ru-chang.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-069",
+      "label": "轻快记录",
+      "role": "action",
+      "file": "qingkuai-jilu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-070",
+      "label": "轻快摇摆舞",
+      "role": "action",
+      "file": "qingkuai-yaobaiwu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-071",
+      "label": "三球抛接",
+      "role": "action",
+      "file": "sanqiu-paojie.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-072",
+      "label": "深度思考碎碎念",
+      "role": "action",
+      "file": "shendu-sikao-suisuinian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-073",
+      "label": "是啊，吃什么",
+      "role": "action",
+      "file": "shia-chishenme.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-074",
+      "label": "收红包",
+      "role": "action",
+      "file": "shou-hongbao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-075",
+      "label": "余额-数金皱眉",
+      "role": "action",
+      "file": "shu-jin-zhou-mei.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-076",
+      "label": "涮火锅",
+      "role": "action",
+      "file": "shuan-huoguo.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-077",
+      "label": "碎碎念-擦桌碎碎念",
+      "role": "action",
+      "file": "suisuinian-cazhuo-suisuinian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-078",
+      "label": "碎碎念-对屏碎碎念",
+      "role": "action",
+      "file": "suisuinian-duiping-suisuinian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-079",
+      "label": "碎碎念-发呆碎碎念",
+      "role": "action",
+      "file": "suisuinian-fadai-suisuinian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-080",
+      "label": "讨糖南瓜灯",
+      "role": "action",
+      "file": "taotang-nanguadeng.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-081",
+      "label": "踢毽子",
+      "role": "action",
+      "file": "ti-jianzi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-082",
+      "label": "偷吃零食被抓住",
+      "role": "action",
+      "file": "touchi-lingshi-bei-zhuazhu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-083",
+      "label": "玩水枪",
+      "role": "action",
+      "file": "wan-shuiqiang.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-084",
+      "label": "玩游戏气急败坏",
+      "role": "action",
+      "file": "wan-youxi-qijibaituai.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-085",
+      "label": "舞狮头",
+      "role": "action",
+      "file": "wu-shitou.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-086",
+      "label": "小幅度原地360度旋转展示",
+      "role": "action",
+      "file": "xiaofudu-yuandi-360du-xuanzhuan-zhanshi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-087",
+      "label": "小提琴演奏",
+      "role": "action",
+      "file": "xiaotiqin-yanzou.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-088",
+      "label": "下五子棋",
+      "role": "action",
+      "file": "xiawuziqi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-089",
+      "label": "写代码",
+      "role": "action",
+      "file": "xie-daima.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-090",
+      "label": "写福字",
+      "role": "action",
+      "file": "xie-fuzi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-091",
+      "label": "摇扇纳凉",
+      "role": "action",
+      "file": "yaoshan-naliang.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-092",
+      "label": "用鲸鱼尾巴拍打地面",
+      "role": "action",
+      "file": "yong-jingyu-weiba-paidadi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-093",
+      "label": "悠闲哼歌",
+      "role": "action",
+      "file": "youxian-hengga.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-094",
+      "label": "优雅女仆舞",
+      "role": "action",
+      "file": "youya-nvpuwu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-095",
+      "label": "原地蹲下玩玩具汽车",
+      "role": "action",
+      "file": "yuandi-dunxia-wan-wanju-qiche.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-096",
+      "label": "原地漂浮踏步",
+      "role": "action",
+      "file": "yuandi-piaofu-tabu.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-097",
+      "label": "原地敲击桌面互动",
+      "role": "action",
+      "file": "yuandi-qiaoji-zhuomian-hudong.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-098",
+      "label": "原地跳跃抓碎头顶物品",
+      "role": "action",
+      "file": "yuandi-tiaoyue-zhuasui-touding-wupin.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-099",
+      "label": "原地小憩沉眠",
+      "role": "action",
+      "file": "yuandi-xiaoqi-chenmian.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-100",
+      "label": "原地重力下蹲压缩",
+      "role": "action",
+      "file": "yuandi-zhongli-xiadun-yasuo.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-101",
+      "label": "原地专心玩魔方",
+      "role": "action",
+      "file": "yuandi-zhuanxin-wan-mofang.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-102",
+      "label": "原地左转奔跑",
+      "role": "move",
+      "file": "yuandi-zuozhuan-benpao.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-103",
+      "label": "照镜子",
+      "role": "action",
+      "file": "zhao-jingzi.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-104",
+      "label": "整体换装试色",
+      "role": "action",
+      "file": "zhengti-huanzhuang-shise.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-105",
+      "label": "中秋赏月吃月饼",
+      "role": "action",
+      "file": "zhongqiu-shangyue-chi-yuebing.gif",
+      "noMirror": true
+    },
+    {
+      "name": "clip-106",
+      "label": "装点圣诞树",
+      "role": "action",
+      "file": "zhuangdian-shengdanshu.gif",
+      "noMirror": true
+    }
+  ]
+}

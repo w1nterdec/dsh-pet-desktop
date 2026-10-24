@@ -11,6 +11,8 @@ interface Clip {
   file?: string;
   frames?: string[];
   fps?: number;
+  sheet?: { file: string; frameWidth: number; frameHeight: number; columns: number; count: number; fps: number };
+  role?: string;
 }
 export interface ImportPlan {
   name: string;
@@ -83,7 +85,7 @@ export function planPetImport(files: Map<string, Buffer>, suggestedName: string)
       manifest.name.length > 80 ||
       !Array.isArray(manifest.animations) ||
       !manifest.animations.length ||
-      manifest.animations.length > 64
+      manifest.animations.length > 128
     )
       throw new PetImportError('pet.json 格式无效');
     const prefix = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
@@ -105,6 +107,39 @@ export function planPetImport(files: Map<string, Buffer>, suggestedName: string)
           throw new PetImportError(`动作 ${index + 1} 的素材不存在或格式不受支持`);
         return name;
       };
+      const role =
+        typeof raw.role === 'string' && ['idle', 'click', 'drag', 'move', 'action'].includes(raw.role)
+          ? raw.role
+          : undefined;
+      if (raw.sheet !== undefined) {
+        if (!raw.sheet || typeof raw.sheet !== 'object' || raw.file !== undefined || raw.frames !== undefined)
+          throw new PetImportError('精灵图动作只能指定 sheet 素材来源');
+        const sheet = raw.sheet;
+        const valid = (value: unknown, max: number) =>
+          typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= max;
+        if (
+          !valid(sheet.frameWidth, 2048) ||
+          !valid(sheet.frameHeight, 2048) ||
+          !valid(sheet.columns, 64) ||
+          !valid(sheet.count, 300) ||
+          !valid(sheet.fps, 30)
+        )
+          throw new PetImportError('精灵图网格、帧数或帧率无效');
+        const file = sourcePath(sheet.file);
+        if (!/\.(png|webp|jpe?g)$/i.test(file)) throw new PetImportError('精灵图须为 PNG、WebP 或 JPEG');
+        return {
+          name: raw.name,
+          role,
+          sheet: {
+            file,
+            frameWidth: sheet.frameWidth,
+            frameHeight: sheet.frameHeight,
+            columns: sheet.columns,
+            count: sheet.count,
+            fps: sheet.fps,
+          },
+        };
+      }
       if (raw.frames !== undefined) {
         if (
           raw.file !== undefined ||
@@ -116,9 +151,9 @@ export function planPetImport(files: Map<string, Buffer>, suggestedName: string)
           throw new PetImportError('序列帧须为 1～300 张 PNG');
         if (!Number.isInteger(raw.fps) || raw.fps! < 1 || raw.fps! > 30)
           throw new PetImportError('帧率须为 1～30 的整数');
-        return { name: raw.name, frames: raw.frames.map(sourcePath), fps: raw.fps };
+        return { name: raw.name, role, frames: raw.frames.map(sourcePath), fps: raw.fps };
       }
-      return { name: raw.name, file: sourcePath(raw.file) };
+      return { name: raw.name, role, file: sourcePath(raw.file) };
     });
     return { name: manifest.name.trim(), clips, warnings: [] };
   }
@@ -136,7 +171,7 @@ export function planPetImport(files: Map<string, Buffer>, suggestedName: string)
       clips: [{ name: 'idle', frames: shimeji, fps: 12 }],
       warnings: ['已按文件编号导入 Shimeji 外观序列；原 XML / Java 行为不会执行，可通过 pet.json 定义动作分组。'],
     };
-  if (media.length > 64) throw new PetImportError('素材过多，请用 pet.json 明确指定动作（最多 64 个）');
+  if (media.length > 128) throw new PetImportError('素材过多，请用 pet.json 明确指定动作（最多 128 个）');
   return {
     name: suggestedName.slice(0, 80),
     clips: media.map((file, index) => ({ name: index === 0 ? 'idle' : `action-${index}`, file })),
@@ -207,7 +242,22 @@ export async function installPetImport(source: string, petDirectory: string): Pr
         await writeFile(target, bytes);
       } else {
         let args: string[];
-        if (clip.frames) {
+        if (clip.sheet) {
+          args = [
+            '-protocol_whitelist',
+            'file,pipe',
+            '-f',
+            'image2',
+            '-loop',
+            '1',
+            '-framerate',
+            String(clip.sheet.fps),
+            '-max_pixels',
+            '8388608',
+            '-i',
+            join(input, clip.sheet.file),
+          ];
+        } else if (clip.frames) {
           const frames = join(stage, 'frames');
           await mkdir(frames, { recursive: true });
           for (let i = 0; i < clip.frames.length; i++)
@@ -247,13 +297,20 @@ export async function installPetImport(source: string, petDirectory: string): Pr
             join(input, clip.file!),
           ];
         }
+        // FFmpeg normally clamps out-of-bounds crop positions. Fail an undersized atlas
+        // instead of silently repeating edge cells when a manifest declares a larger grid.
+        const sheet = clip.sheet;
+        const sheetFilter = sheet
+          ? `trim=end_frame=${sheet.count},crop=if(gte(iw\\,${sheet.frameWidth * sheet.columns})*gte(ih\\,${sheet.frameHeight * Math.ceil(sheet.count / sheet.columns)})*lte(iw\\,4096)*lte(ih\\,4096)\\,${sheet.frameWidth}\\,0):${sheet.frameHeight}:mod(n\\,${sheet.columns})*${sheet.frameWidth}:floor(n/${sheet.columns})*${sheet.frameHeight},`
+          : '';
         await transcode([
           ...args,
+          ...(clip.sheet ? ['-frames:v', String(Math.ceil((clip.sheet.count * 24) / clip.sheet.fps))] : []),
           '-t',
           '30',
           '-an',
           '-vf',
-          'scale=640:640:force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1',
+          sheetFilter + 'scale=640:640:force_original_aspect_ratio=decrease:force_divisible_by=2,setsar=1',
           '-r',
           '24',
           '-c:v',
@@ -278,7 +335,9 @@ export async function installPetImport(source: string, petDirectory: string): Pr
       )
         throw new PetImportError('转换后的素材超出大小限制');
     }
-    const idle = plan.clips[0].name;
+    const idle = (plan.clips.find((clip) => clip.role === 'idle') ?? plan.clips[0]).name;
+    const drag = plan.clips.filter((clip) => clip.role === 'drag').map((clip) => clip.name);
+    const clicks = plan.clips.filter((clip) => clip.role === 'click').map((clip) => clip.name);
     const config = {
       pets: [
         {
@@ -296,8 +355,8 @@ export async function installPetImport(source: string, petDirectory: string): Pr
       animations: {
         idle: [idle],
         turn: [],
-        drag: [idle],
-        clicks: [plan.clips[1]?.name ?? idle],
+        drag: drag.length ? drag : [idle],
+        clicks: clicks.length ? clicks : [plan.clips[1]?.name ?? idle],
         moves: { default: {}, actions: [] },
         categories:
           plan.clips.length > 1

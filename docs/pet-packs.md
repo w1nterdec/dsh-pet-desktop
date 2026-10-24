@@ -7,6 +7,7 @@
 - 透明 WebM：直接导入，沿用原来的透明视频播放器。
 - GIF、PNG/APNG、WebP、JPEG、MOV、MP4：桌面版调用本机 FFmpeg 转为 VP9 Alpha WebM。不透明输入不会自动抠图。
 - PNG 序列：用 `pet.json` 指定帧顺序与帧率。
+- 精灵图：用 `sheet` 指定 PNG/WebP/JPEG 网格，按从左到右、从上到下播放；Android 按需裁切，桌面转为透明 WebM。
 - Shimeji：识别 `shime1.png`、`shime2.png` 等，按数字排序转换成外观序列。原 Java/XML 行为不会运行；需要还原动作时，在 `pet.json` 中明确分组。
 - ZIP：可包含以上素材与一个 `pet.json`，支持外层单个目录。也可以直接选择解压后的素材目录。
 
@@ -35,15 +36,34 @@ fox/
   "format": "dsh-pet/pack-v1",
   "name": "小狐狸",
   "animations": [
-    { "name": "idle", "file": "idle.gif" },
-    { "name": "wave", "frames": ["wave/001.png", "wave/002.png"], "fps": 12 }
+    { "name": "idle", "label": "待机", "role": "idle", "file": "idle.gif" },
+    { "name": "wave", "role": "click", "frames": ["wave/001.png", "wave/002.png"], "fps": 12 }
   ]
 }
 ```
 
-动作名称必须唯一，使用字母、数字、中文、下划线或连字符，最长 60 字符。第一个动作是待机；后续动作进入桌面随机动作池，第二个动作也用于点击回应。Android 点击伙伴时依次切换动作。
+动作名称必须唯一，使用字母、数字、中文、下划线或连字符，最长 60 字符。`label` 是可选显示名，最长 80 字符。`role` 可为 `idle`、`click`、`drag`、`move`、`action`；省略时使用默认动作。桌面将 idle/click/drag 映射到对应交互，Android 同时识别移动角色。无角色时使用第一个动作待机，其余作为回应/动作池。
 
-一个动作使用 `file` 或 `frames` 之一；序列帧必须是 PNG，最多 300 帧，帧率为 1～30 的整数。最多 64 个动作，名称最长 80 字符，`pet.json` 最大 64 KB。参考 [JSON Schema](pet-pack.schema.json)。Android 可直接读取 GIF/WebP/PNG/JPEG 与 PNG 序列，桌面平台转换后的 WebM 不能直接交给当前 Android 播放器。
+一个动作使用 `file`、`frames` 或 `sheet` 之一；序列帧必须是 PNG，最多 300 帧，帧率为 1～30 的整数。最多 128 个动作，包名称最长 80 字符，`pet.json` 最大 64 KB。参考 [JSON Schema](pet-pack.schema.json)。Android 可直接读取 GIF/WebP/PNG/JPEG、PNG 序列与精灵图，桌面平台转换后的 WebM 不能直接交给当前 Android 播放器。
+
+精灵图动作示例（素材包还需包含 `atlas.png`）：
+
+```json
+{
+  "name": "walk",
+  "role": "move",
+  "sheet": {
+    "file": "atlas.png",
+    "frameWidth": 128,
+    "frameHeight": 128,
+    "columns": 4,
+    "count": 8,
+    "fps": 12
+  }
+}
+```
+
+每帧宽高为 1～2048，列数 1～64，帧数 1～300，fps 为 1～30 整数。图像须容纳声明的网格；Android 限制整张精灵图最长边 4096 且总面积不超过 8MP。`noMirror` 默认为 true，Android 允许明确设置 false 后随移动方向翻转；桌面转换保留素材原始方向。
 
 ## 数据与失败处理
 
@@ -53,6 +73,7 @@ fox/
 - 桌面端在临时目录完成全部转换后，最后发布配置文件；失败清除暂存素材。每次导入使用新 ID，不覆盖原有伙伴。最多同时管理 12 只导入的伙伴。
 - 导入后默认关闭 AI 碎碎念、余额与工作状态联动。
 - 桌面端素材位于 `~/.dsh/dsh-pet/pet/import-<UUID>-animation/`，配置为同级 `import-<UUID>-config.json`。移除后配置改名为 `import-<UUID>.removed.json`，手动改回原名即可恢复；可通过「打开数据目录」备份这些文件。
-- Android 图片最长边不得超过 2048 像素，显示解码限制到 512 像素，序列按需解码；只保留当前导入伙伴与内置伙伴，不读取桌面端密钥或配置。
+- Android 普通图片最长边不得超过 2048 像素，显示解码限制到 512 像素，序列和精灵图按需解码；保留多个导入包，最多保存 12 只伙伴、同时显示 4 只，不读取桌面端密钥或配置。
+- Android 可通过伙伴卡片导出 ZIP 动作包，再导入 Android 或桌面。导出仅包含素材和动作清单，不包含人设、聊天、API 设置或密钥。移除伙伴保留素材，方便从已有包重新添加。
 
 素材的版权与使用许可由素材作者规定；请使用有权使用的桌宠资源。

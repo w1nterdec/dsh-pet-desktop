@@ -1,0 +1,15 @@
+<resources>
+    <style name="Theme.Pet.Light" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item><item name="android:colorAccent">#7760D6</item>
+        <item name="android:colorBackground">#F5F6FB</item><item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#F5F6FB</item><item name="android:statusBarColor">#F5F6FB</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.Pet.Dark" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item><item name="android:colorAccent">#AC99FF</item>
+        <item name="android:colorBackground">#171B29</item><item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">#171B29</item><item name="android:statusBarColor">#171B29</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+    <style name="Theme.Pet" parent="Theme.Pet.Light" />
+</resources>

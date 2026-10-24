@@ -1,5 +1,13 @@
 # 变更记录
 
+## 未发布 — Android 0.2.0-beta.1 与精灵图兼容
+
+- Android 内置完整 106 个动画，增加伙伴/动作/设置页面、主题、动作搜索与长按菜单。
+- 增加最多 12 只独立伙伴、4 个同时显示的悬浮窗、人设/位置/大小、拖拽抛掷、重力反弹、可选碰撞和省电模式。
+- 增加原生 AI 文本聊天、流式回复、取消和连接测试，支持 Chat Completions、Responses、Anthropic；每只伙伴拥有独立 Keystore 加密记忆，默认关闭 AI 和自动问候。
+- Android 导入保留已有包，支持复用素材和导出便携 ZIP；桌面/Android 共同支持网格精灵图及 128 个动作的清单。
+- 增加真实 FFmpeg 帧顺序测试、模拟网络协议测试与 Android 模拟器验证；CI 覆盖 Android 9/15 设备测试。
+
 ## 未发布 — 跨平台扩展
 
 - 新增 macOS DMG/ZIP、Linux AppImage/Debian/tar.gz 目标和架构校验，修复 macOS Electron 缓存路径推导。

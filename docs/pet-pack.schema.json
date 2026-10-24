@@ -2,9 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "DSH Pet portable animation pack v1",
   "type": "object",
-  "required": ["format", "name", "animations"],
+  "required": [
+    "format",
+    "name",
+    "animations"
+  ],
   "properties": {
-    "format": { "const": "dsh-pet/pack-v1" },
+    "format": {
+      "const": "dsh-pet/pack-v1"
+    },
     "name": {
       "type": "string",
       "minLength": 1,
@@ -14,10 +20,12 @@
     "animations": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 64,
+      "maxItems": 128,
       "items": {
         "type": "object",
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -25,18 +33,144 @@
             "maxLength": 60,
             "pattern": "^[\\p{L}\\p{N}_-]+$"
           },
-          "file": { "type": "string", "minLength": 1, "maxLength": 240 },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
           "frames": {
             "type": "array",
             "minItems": 1,
             "maxItems": 300,
-            "items": { "type": "string", "pattern": "\\.[pP][nN][gG]$" }
+            "items": {
+              "type": "string",
+              "pattern": "\\.[pP][nN][gG]$"
+            }
           },
-          "fps": { "type": "integer", "minimum": 1, "maximum": 30 }
+          "fps": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "role": {
+            "enum": [
+              "idle",
+              "click",
+              "drag",
+              "move",
+              "action"
+            ]
+          },
+          "noMirror": {
+            "type": "boolean"
+          },
+          "sheet": {
+            "type": "object",
+            "required": [
+              "file",
+              "frameWidth",
+              "frameHeight",
+              "columns",
+              "count",
+              "fps"
+            ],
+            "properties": {
+              "file": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 240
+              },
+              "frameWidth": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2048
+              },
+              "frameHeight": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2048
+              },
+              "columns": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 300
+              },
+              "fps": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 30
+              }
+            }
+          }
         },
         "oneOf": [
-          { "required": ["file"], "not": { "required": ["frames"] } },
-          { "required": ["frames", "fps"], "not": { "required": ["file"] } }
+          {
+            "required": [
+              "file"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "frames"
+                  ]
+                },
+                {
+                  "required": [
+                    "sheet"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "required": [
+              "frames",
+              "fps"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "file"
+                  ]
+                },
+                {
+                  "required": [
+                    "sheet"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "required": [
+              "sheet"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "file"
+                  ]
+                },
+                {
+                  "required": [
+                    "frames"
+                  ]
+                }
+              ]
+            }
+          }
         ]
       }
     }

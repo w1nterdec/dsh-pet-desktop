@@ -9,6 +9,97 @@ import { installPetImport } from '../../src/app/pet-import.ts';
 
 const exec = promisify(execFile);
 test(
+  'sprite sheet crops ordered frames and stops before unused grid cells',
+  {
+    skip: !process.env.DSH_PET_FFMPEG_PATH,
+    timeout: 120000,
+  },
+  async () => {
+    const root = await mkdtemp(join(tmpdir(), 'pet-sheet-'));
+    try {
+      const source = join(root, 'source');
+      await mkdir(source);
+      await exec(
+        process.env.DSH_PET_FFMPEG_PATH,
+        [
+          '-v',
+          'error',
+          '-f',
+          'lavfi',
+          '-i',
+          'color=red:s=32x32',
+          '-f',
+          'lavfi',
+          '-i',
+          'color=blue:s=32x32',
+          '-filter_complex',
+          '[0:v][1:v]hstack',
+          '-frames:v',
+          '1',
+          join(source, 'atlas.png'),
+        ],
+        { windowsHide: true },
+      );
+      await writeFile(
+        join(source, 'pet.json'),
+        JSON.stringify({
+          format: 'dsh-pet/pack-v1',
+          name: 'Atlas test',
+          animations: [
+            {
+              name: 'idle',
+              role: 'idle',
+              sheet: { file: 'atlas.png', frameWidth: 32, frameHeight: 32, columns: 2, count: 2, fps: 12 },
+            },
+          ],
+        }),
+      );
+      const pet = await installPetImport(source, join(root, 'pets'));
+      const video = join(root, 'pets', `${pet.id}-animation`, 'idle.webm');
+      const { stdout } = await exec(
+        process.env.DSH_PET_FFMPEG_PATH,
+        [
+          '-v',
+          'error',
+          '-i',
+          video,
+          '-vf',
+          'scale=1:1',
+          '-fps_mode',
+          'passthrough',
+          '-pix_fmt',
+          'rgb24',
+          '-f',
+          'rawvideo',
+          '-',
+        ],
+        { encoding: 'buffer', windowsHide: true },
+      );
+      assert.equal(stdout.length, 12, 'two 12fps source frames become exactly four 24fps frames');
+      assert.ok(stdout[0] > 200 && stdout[2] < 40, 'first frame is red');
+      assert.ok(stdout[9] < 40 && stdout[11] > 200, 'last frame is blue');
+      const before = await readdir(join(root, 'pets'));
+      await writeFile(
+        join(source, 'pet.json'),
+        JSON.stringify({
+          format: 'dsh-pet/pack-v1',
+          name: 'Invalid grid',
+          animations: [
+            {
+              name: 'idle',
+              sheet: { file: 'atlas.png', frameWidth: 32, frameHeight: 32, columns: 3, count: 3, fps: 12 },
+            },
+          ],
+        }),
+      );
+      await assert.rejects(installPetImport(source, join(root, 'pets')), /转换失败/);
+      assert.deepEqual(await readdir(join(root, 'pets')), before, 'invalid atlas is rolled back');
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
+test(
   'real FFmpeg preserves GIF alpha, converts ordered PNG frames and rolls back malformed media',
   {
     skip: !process.env.DSH_PET_FFMPEG_PATH,
