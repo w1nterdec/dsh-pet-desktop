@@ -29,7 +29,7 @@
 
 跨平台预览构建从 GitHub Actions 下载：打开 [桌面构建](https://github.com/w1nterdec/dsh-pet-desktop/actions/workflows/desktop-build.yml) 中成功的运行，在 **Artifacts** 选择 Windows x64、macOS x64 / arm64 或 Linux x64；Android APK 位于 [Android 构建](https://github.com/w1nterdec/dsh-pet-desktop/actions/workflows/android-build.yml) 的 `DSH-Pet-Android-preview`。下载 Actions 产物通常需要登录 GitHub。
 
-2026-10-24 已通过 Windows、macOS Intel / Apple Silicon、Linux X11 的原生打包与交互检查，以及 Android 的编译、单元测试和 Lint。Android 仍需真机验收，多屏、不同 Linux 桌面和手机厂商后台策略仍需设备兼容性测试。详见 [跨平台说明](docs/cross-platform.md)。
+2026-10-24 已通过 Windows、macOS Intel / Apple Silicon、Linux X11 的原生交互检查，以及 Android 编译、单元测试、Lint 和 Android 9/15 模拟器测试。不同设备的多屏、桌面环境、手机厂商后台策略与长时间耗电仍需真机验收。详见 [跨平台说明](docs/cross-platform.md) 和 [本轮验证记录](docs/validation-2026-10-24.md)。
 
 安装包暂未进行代码签名。无需管理员权限；默认安装到当前用户目录。
 

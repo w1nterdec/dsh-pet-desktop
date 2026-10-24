@@ -2,7 +2,7 @@
 
 本次扩展增加原生平台构建入口。Windows 延续 Electron；macOS、Linux 使用同一应用与配置；Android 使用独立原生应用。构建支持不代表已通过所有硬件、桌面环境与手机厂商的兼容认证。
 
-2026-10-24 验证记录：[桌面 CI](https://github.com/w1nterdec/dsh-pet-desktop/actions/runs/40084311239) 的 Windows x64、macOS Intel / Apple Silicon、Linux X11 构建与原生交互检查全部通过；[Android CI](https://github.com/w1nterdec/dsh-pet-desktop/actions/runs/40084449744) 的编译、单元测试、Lint 与 APK 产物上传通过。预览包可从对应运行的 Artifacts 下载；这不表示已完成代码签名、公证或商店发布。
+2026-10-24 验证记录：[桌面 CI](https://github.com/w1nterdec/dsh-pet-desktop/actions/runs/40108562238) 提供 Windows x64、macOS Intel / Apple Silicon、Linux X11 安装包与原生交互报告；[Android CI](https://github.com/w1nterdec/dsh-pet-desktop/actions/runs/40108238030) 的编译、13 项单元测试、Lint、Android 9/15 各 5 项设备测试和截图上传全部通过。预览包可从对应运行的 Artifacts 下载；这不表示已完成发行签名、公证或商店发布。详细范围见 [本轮验证记录](validation-2026-10-24.md)。
 
 ## 桌面平台
 
@@ -25,7 +25,7 @@ node scripts/dist.mjs tar.gz
 
 默认架构为当前 Node.js 架构；`DSH_PET_TARGET_ARCH=x64` 或 `arm64` 可显式选择。跨架构构建不会误用当前架构的缓存 Electron。`DSH_PET_ELECTRON_DIST` 可以提供对应目标架构的解压运行时；没有缓存时，显式设置 `DSH_PET_ALLOW_ELECTRON_DOWNLOAD=1` 允许下载。
 
-macOS 应在 macOS 上打包 DMG；Linux 应在 Linux 上构建 Debian/AppImage。CI 增加 macOS Intel、Apple Silicon 和 Linux x64 的构建与原生窗口测试；这些工作流需要推送后实际运行，不能把本机配置校验当作对应平台的测试结果。
+macOS 在 macOS 上打包 DMG；Linux 在 Linux 上构建 Debian/AppImage。CI 分别在 macOS Intel、Apple Silicon 和 Linux x64 执行构建与原生窗口测试，安装包和界面截图可从上方运行记录下载。
 
 ### macOS
 
