@@ -1,4 +1,16 @@
+<div align="center">
+
 # 桌宠之家 · DSH Pet Desktop
+
+**给桌面和手机多一点陪伴**
+
+透明动画 · 多宠物 · 可选 AI 对话
+
+[下载安装](#安装) · [Android 说明](android/README.md) · [导入桌宠](docs/pet-packs.md) · [跨平台构建](docs/cross-platform.md)
+
+</div>
+
+---
 
 支持 **Windows、macOS、Linux 和 Android** 的宠物陪伴应用。透明动画、可拖拽的小伙伴、可选的 AI 对话，以及独立的控制中心。
 
